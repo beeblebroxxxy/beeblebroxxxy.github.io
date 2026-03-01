@@ -94,7 +94,6 @@
             border-color: #1e1e1e;
         }
 
-        /* Скрываем кнопку входа по умолчанию (она будет невидима, но оставим для логики) */
         #loginBtn {
             display: none;
         }
@@ -111,7 +110,6 @@
             padding-left: 20px;
         }
 
-        /* Сетка */
         .art-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -194,7 +192,6 @@
             padding-top: 12px;
         }
 
-        /* Блок контактов */
         .contact-block {
             margin-top: 40px;
             padding: 20px;
@@ -213,7 +210,6 @@
             border-bottom: 1px dotted #777;
         }
 
-        /* Кнопки админа */
         .edit-btn, .add-btn, .edit-contacts-btn {
             background: white;
             border: 1px solid #1e1e1e;
@@ -261,7 +257,6 @@
             gap: 5px;
         }
 
-        /* Модальные окна */
         .modal {
             display: none;
             position: fixed;
@@ -338,7 +333,6 @@
             background: #b15a5a !important;
         }
 
-        /* Модалка увеличения картинки */
         .zoom-modal .modal-content {
             max-width: 800px;
             background: transparent;
@@ -362,7 +356,6 @@
             text-align: center;
         }
 
-        /* Био с карандашом внутри */
         .artist-bio {
             font-size: 1.2rem;
             white-space: pre-line;
@@ -372,7 +365,7 @@
             background: rgba(255,255,255,0.7);
             position: relative;
             border: 1px solid transparent;
-            padding-right: 50px; /* Место для карандаша */
+            padding-right: 50px;
         }
         
         .admin-mode .artist-bio { border: 1px dashed #aaa; }
@@ -402,7 +395,6 @@
             color: white;
         }
 
-        /* Игра */
         .game-container {
             display: flex;
             flex-direction: column;
@@ -444,7 +436,6 @@
 
         .game-btn:hover { background: #fff; }
 
-        /* Сенсорные кнопки для мобильного тетриса */
         .mobile-controls {
             display: flex;
             gap: 15px;
@@ -499,7 +490,6 @@
             </div>
         </header>
 
-        <!-- Модалка входа -->
         <div id="loginModal" class="modal">
             <div class="modal-content">
                 <h3>доступ</h3>
@@ -511,12 +501,10 @@
             </div>
         </div>
 
-        <!-- Модалка редактирования -->
         <div id="editModal" class="modal">
             <div class="modal-content" id="editModalContent"></div>
         </div>
 
-        <!-- Модалка увеличения картинки -->
         <div id="zoomModal" class="modal zoom-modal">
             <div class="modal-content zoom-content">
                 <img id="zoomImage" class="zoom-image" src="" alt="Увеличенное изображение">
@@ -528,7 +516,6 @@
             </div>
         </div>
 
-        <!-- СТРАНИЦА 1: О художнице -->
         <section id="aboutPage" class="page active">
             <h1>библ</h1>
             <div class="artist-bio" id="artistBioDisplay">
@@ -537,7 +524,6 @@
             </div>
         </section>
 
-        <!-- СТРАНИЦА 2: Выставка -->
         <section id="exhibitionPage" class="page">
             <h1>выставка</h1>
             <div class="admin-actions">
@@ -546,7 +532,6 @@
             <div class="art-grid" id="exhibitionGrid"></div>
         </section>
 
-        <!-- СТРАНИЦА 3: Магазин -->
         <section id="shopPage" class="page">
             <h1>магазин</h1>
             <div class="admin-actions">
@@ -558,7 +543,6 @@
             </div>
         </section>
 
-        <!-- СТРАНИЦА 4: Игра -->
         <section id="gamePage" class="page">
             <h1>тетрис / пауза</h1>
             <div class="game-container">
@@ -568,7 +552,6 @@
                     <button class="game-btn" id="newGameBtn">Новая</button>
                     <button class="game-btn" id="pauseGameBtn">Пауза</button>
                 </div>
-                <!-- Сенсорные кнопки для телефона -->
                 <div class="mobile-controls">
                     <button class="game-btn" id="moveLeftBtn">←</button>
                     <button class="game-btn" id="rotateBtn">↻</button>
@@ -582,72 +565,56 @@
 
     <script>
         (function() {
-            // Данные с изображениями по умолчанию
-            let appData = {
-                artistBio: "Художница из Петербурга. Работаю с маслом, акрилом, текстилем. Участница групповых выставок. Исследую фактуры и городскую тишину.",
-                exhibition: [
-                    { id: 'e1', title: 'Сон в переулке', description: 'холст/масло, 2024', image: null },
-                    { id: 'e2', title: 'Структура тишины', description: 'бумага/акрил, 2023', image: null },
-                    { id: 'e3', title: 'Без названия', description: 'смешанная техника', image: null }
-                ],
-                shop: [
-                    { id: 's1', title: 'Городской пейзаж', description: '40x50, масло', price: '32000 ₽', image: null },
-                    { id: 's2', title: 'Абстракция', description: '60x70, акрил', price: '55000 ₽', image: null }
-                ],
-                contacts: {
-                    tg: '@bibl_art',
-                    wa: '+7 999 123-45-67',
-                    vk: 'vk.com/bibl.art',
-                    tgk: 't.me/bibl_channel'
-                }
-            };
+            const WORKER_URL = 'https://green-disk-35dc.stef-ruprecht.workers.dev';
+            const ADMIN_PASSWORD = 'BiblVeta098123';
 
             let isAdmin = false;
             let currentPage = 'about';
-            let editingItem = null;
-
-            // DOM элементы
-            const body = document.body;
-            const pages = {
-                about: document.getElementById('aboutPage'),
-                exhibition: document.getElementById('exhibitionPage'),
-                shop: document.getElementById('shopPage'),
-                game: document.getElementById('gamePage')
+            let artworks = { exhibition: [], shop: [] };
+            let artistBio = "Художница из Петербурга. Работаю с маслом, акрилом, текстилем. Участница групповых выставок. Исследую фактуры и городскую тишину.";
+            let contacts = {
+                tg: '@bibl_art',
+                wa: '+7 999 123-45-67',
+                vk: 'vk.com/bibl.art',
+                tgk: 't.me/bibl_channel'
             };
-            const navBtns = document.querySelectorAll('.nav-btn');
-            const loginBtn = document.getElementById('loginBtn');
-            const logoutBtn = document.getElementById('logoutBtn');
-            const authStatus = document.getElementById('authStatus');
-            const loginModal = document.getElementById('loginModal');
-            const passwordInput = document.getElementById('passwordInput');
-            const submitPassword = document.getElementById('submitPassword');
-            const cancelLogin = document.getElementById('cancelLogin');
-            const editModal = document.getElementById('editModal');
-            const editModalContent = document.getElementById('editModalContent');
-            const zoomModal = document.getElementById('zoomModal');
-            const zoomImage = document.getElementById('zoomImage');
-            const zoomTitle = document.getElementById('zoomTitle');
-            const zoomDescription = document.getElementById('zoomDescription');
 
-            // Элементы для рендера
-            const artistBioDisplay = document.getElementById('artistBioDisplay');
-            const exhibitionGrid = document.getElementById('exhibitionGrid');
-            const shopGrid = document.getElementById('shopGrid');
-            const contactsBlock = document.getElementById('contactsBlock');
-            const editBioBtn = document.getElementById('editBioBtn');
-            const addExhibitionBtn = document.getElementById('addExhibitionBtn');
-            const addShopBtn = document.getElementById('addShopBtn');
-
-            // --- СЕКРЕТНЫЙ ВХОД ЧЕРЕЗ URL (СЛОЖНОЕ СЛОВО) ---
-            // Проверяем URL при загрузке
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('bibl_edit')) {
-                // Если параметр есть — показываем окно входа
-                loginModal.classList.add('active');
+                document.getElementById('loginModal').classList.add('active');
             }
 
-            function generateId() { return Date.now() + '-' + Math.random().toString(36); }
-            
+            async function loadArtworks() {
+                try {
+                    const res = await fetch(`${WORKER_URL}/api/artworks`);
+                    const data = await res.json();
+                    artworks.exhibition = data.filter(item => item.section === 'exhibition');
+                    artworks.shop = data.filter(item => item.section === 'shop');
+                } catch (e) {
+                    console.error('Failed to load artworks:', e);
+                }
+                renderAll();
+            }
+
+            async function addArtwork(formData) {
+                if (!isAdmin) return;
+                await fetch(`${WORKER_URL}/api/artworks`, {
+                    method: 'POST',
+                    body: formData
+                });
+                loadArtworks();
+            }
+
+            async function deleteArtwork(id) {
+                if (!isAdmin) return;
+                if (confirm('Удалить работу?')) {
+                    await fetch(`${WORKER_URL}/api/artworks/${id}`, {
+                        method: 'DELETE'
+                    });
+                    loadArtworks();
+                }
+            }
+
             function escapeHtml(unsafe) {
                 if (!unsafe) return unsafe;
                 return unsafe.replace(/[&<>"]/g, function(m) {
@@ -659,17 +626,6 @@
                 });
             }
 
-            // Функция для чтения файла как Data URL
-            function readFileAsDataURL(file) {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(file);
-                });
-            }
-
-            // Рендер
             function renderAll() {
                 renderBio();
                 renderExhibition();
@@ -678,44 +634,45 @@
             }
 
             function renderBio() {
-                // Сохраняем кнопку внутри
-                artistBioDisplay.innerHTML = `${escapeHtml(appData.artistBio)} <button class="bio-edit-btn" id="editBioBtn">✎</button>`;
-                // Перевешиваем обработчик
+                document.getElementById('artistBioDisplay').innerHTML = 
+                    `${escapeHtml(artistBio)} <button class="bio-edit-btn" id="editBioBtn">✎</button>`;
                 document.getElementById('editBioBtn').addEventListener('click', openEditBioModal);
             }
 
             function renderExhibition() {
-                exhibitionGrid.innerHTML = appData.exhibition.map(item => `
+                const grid = document.getElementById('exhibitionGrid');
+                grid.innerHTML = artworks.exhibition.map(item => `
                     <div class="art-card" data-id="${item.id}">
-                        <div class="art-image-container" onclick="openZoom('${item.image || ''}', '${escapeHtml(item.title)}', '${escapeHtml(item.description)}')">
-                            <img class="art-image" src="${item.image || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'500\' viewBox=\'0 0 400 500\'%3E%3Crect width=\'400\' height=\'500\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Georgia\'%3EНет фото%3C/text%3E%3C/svg%3E'}" alt="${escapeHtml(item.title)}">
+                        <div class="art-image-container" onclick="openZoom('${item.image_url}', '${escapeHtml(item.title)}', '${escapeHtml(item.description)}')">
+                            <img class="art-image" src="${item.image_url}" alt="${escapeHtml(item.title)}">
                             <div class="zoom-icon">🔍</div>
                         </div>
-                        <div class="art-title">${escapeHtml(item.title) || 'Без названия'}</div>
+                        <div class="art-title">${escapeHtml(item.title)}</div>
                         <div class="art-description">${escapeHtml(item.description) || '—'}</div>
-                        <button class="edit-btn" data-type="exhibition" data-id="${item.id}">✎</button>
+                        ${isAdmin ? `<button class="edit-btn" onclick="deleteArtwork(${item.id})">🗑️</button>` : ''}
                     </div>
                 `).join('');
             }
 
             function renderShop() {
-                shopGrid.innerHTML = appData.shop.map(item => `
+                const grid = document.getElementById('shopGrid');
+                grid.innerHTML = artworks.shop.map(item => `
                     <div class="art-card" data-id="${item.id}">
-                        <div class="art-image-container" onclick="openZoom('${item.image || ''}', '${escapeHtml(item.title)}', '${escapeHtml(item.description)}')">
-                            <img class="art-image" src="${item.image || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'500\' viewBox=\'0 0 400 500\'%3E%3Crect width=\'400\' height=\'500\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Georgia\'%3EНет фото%3C/text%3E%3C/svg%3E'}" alt="${escapeHtml(item.title)}">
+                        <div class="art-image-container" onclick="openZoom('${item.image_url}', '${escapeHtml(item.title)}', '${escapeHtml(item.description)}')">
+                            <img class="art-image" src="${item.image_url}" alt="${escapeHtml(item.title)}">
                             <div class="zoom-icon">🔍</div>
                         </div>
-                        <div class="art-title">${escapeHtml(item.title) || 'Без названия'}</div>
+                        <div class="art-title">${escapeHtml(item.title)}</div>
                         <div class="art-description">${escapeHtml(item.description) || '—'}</div>
                         <div class="art-price">${escapeHtml(item.price) || 'цена по запросу'}</div>
-                        <button class="edit-btn" data-type="shop" data-id="${item.id}">✎</button>
+                        ${isAdmin ? `<button class="edit-btn" onclick="deleteArtwork(${item.id})">🗑️</button>` : ''}
                     </div>
                 `).join('');
             }
 
             function renderContacts() {
-                const c = appData.contacts;
-                contactsBlock.innerHTML = `
+                const c = contacts;
+                document.getElementById('contactsBlock').innerHTML = `
                     <a href="https://t.me/${c.tg.replace('@','')}" target="_blank">📱 TG: ${c.tg}</a>
                     <a href="https://wa.me/${c.wa.replace(/[^0-9]/g, '')}" target="_blank">📞 WhatsApp</a>
                     <a href="https://${c.vk}" target="_blank">📘 VK: ${c.vk}</a>
@@ -730,245 +687,42 @@
                     alert('Изображение отсутствует');
                     return;
                 }
-                zoomImage.src = image;
-                zoomTitle.innerText = title;
-                zoomDescription.innerText = description;
-                zoomModal.classList.add('active');
-            }
+                document.getElementById('zoomImage').src = image;
+                document.getElementById('zoomTitle').innerText = title;
+                document.getElementById('zoomDescription').innerText = description;
+                document.getElementById('zoomModal').classList.add('active');
+            };
 
-            // Админ UI
-            function updateAuthUI() {
-                if (isAdmin) {
-                    body.classList.add('admin-mode');
-                    authStatus.innerText = '⚡';
-                    loginBtn.style.display = 'none';
-                    logoutBtn.style.display = 'inline-block';
-                } else {
-                    body.classList.remove('admin-mode');
-                    authStatus.innerText = '';
-                    loginBtn.style.display = 'none'; // Всегда скрыта
-                    logoutBtn.style.display = 'none';
-                }
-            }
+            window.deleteArtwork = deleteArtwork;
 
-            // Навигация
-            function switchPage(pageId) {
-                currentPage = pageId;
-                Object.values(pages).forEach(p => p.classList.remove('active'));
-                pages[pageId].classList.add('active');
-                navBtns.forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.page === pageId);
-                });
-            }
-
-            navBtns.forEach(btn => {
-                btn.addEventListener('click', () => switchPage(btn.dataset.page));
-            });
-
-            // Логин
-            cancelLogin.addEventListener('click', () => loginModal.classList.remove('active'));
-            submitPassword.addEventListener('click', () => {
-                if (passwordInput.value === 'BiblVeta098123') {
-                    isAdmin = true;
-                    loginModal.classList.remove('active');
-                    updateAuthUI();
-                    renderAll();
-                } else { alert('Неверный пароль'); }
-            });
-            
-            logoutBtn.addEventListener('click', () => {
-                isAdmin = false;
-                updateAuthUI();
-                renderAll();
-            });
-
-            // Редактирование био (перенесено в функцию)
             function openEditBioModal() {
                 if (!isAdmin) return;
-                editingItem = { type: 'bio' };
-                editModalContent.innerHTML = `
+                const modal = document.getElementById('editModal');
+                const content = document.getElementById('editModalContent');
+                content.innerHTML = `
                     <h3>Редактировать описание</h3>
-                    <textarea id="modalBio" rows="6">${escapeHtml(appData.artistBio)}</textarea>
+                    <textarea id="modalBio" rows="6">${escapeHtml(artistBio)}</textarea>
                     <div class="modal-buttons">
                         <button id="saveBioBtn">Сохранить</button>
                         <button class="cancel" id="cancelModal">Отмена</button>
                     </div>
                 `;
-                editModal.classList.add('active');
+                modal.classList.add('active');
                 
-                const saveBtn = document.getElementById('saveBioBtn');
-                const cancelBtn = document.getElementById('cancelModal');
-                
-                saveBtn.addEventListener('click', () => {
-                    appData.artistBio = document.getElementById('modalBio').value;
+                document.getElementById('saveBioBtn').addEventListener('click', () => {
+                    artistBio = document.getElementById('modalBio').value;
                     renderBio();
-                    editModal.classList.remove('active');
+                    modal.classList.remove('active');
                 });
                 
-                cancelBtn.addEventListener('click', () => editModal.classList.remove('active'));
+                document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('active'));
             }
 
-            // Редактирование карточки с загрузкой фото
-            function openEditItemModal(type, id) {
-                let item;
-                if (type === 'exhibition') item = appData.exhibition.find(i => i.id === id);
-                else item = appData.shop.find(i => i.id === id);
-                if (!item) return;
-
-                editingItem = { type, id };
-                const isShop = (type === 'shop');
-                
-                editModalContent.innerHTML = `
-                    <h3>${isShop ? 'Редактировать товар' : 'Редактировать работу'}</h3>
-                    <input type="text" id="modalTitle" placeholder="Название" value="${escapeHtml(item.title || '')}">
-                    <textarea id="modalDesc" placeholder="Описание" rows="3">${escapeHtml(item.description || '')}</textarea>
-                    
-                    <div style="margin-bottom: 15px;">
-                        <label>Загрузить новое фото:</label>
-                        <input type="file" id="modalImageFile" accept="image/*">
-                    </div>
-                    
-                    ${item.image ? `<div><img src="${item.image}" class="image-preview" alt="Предпросмотр"></div>` : ''}
-                    
-                    ${isShop ? '<input type="text" id="modalPrice" placeholder="Цена" value="' + escapeHtml(item.price || '') + '">' : ''}
-                    
-                    <div class="modal-buttons">
-                        <button id="saveItemBtn">Сохранить</button>
-                        <button class="delete-btn" id="deleteItemBtn">Удалить</button>
-                        <button class="cancel" id="cancelModal">Отмена</button>
-                    </div>
-                `;
-                
-                editModal.classList.add('active');
-
-                const fileInput = document.getElementById('modalImageFile');
-                let newImageData = null;
-
-                fileInput.addEventListener('change', async (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        newImageData = await readFileAsDataURL(file);
-                        // Покажем превью
-                        const preview = document.createElement('img');
-                        preview.src = newImageData;
-                        preview.className = 'image-preview';
-                        fileInput.parentNode.appendChild(preview);
-                    }
-                });
-
-                document.getElementById('saveItemBtn').addEventListener('click', () => {
-                    item.title = document.getElementById('modalTitle').value;
-                    item.description = document.getElementById('modalDesc').value;
-                    if (newImageData) {
-                        item.image = newImageData;
-                    }
-                    if (isShop) item.price = document.getElementById('modalPrice').value;
-                    renderAll();
-                    editModal.classList.remove('active');
-                });
-
-                document.getElementById('deleteItemBtn').addEventListener('click', () => {
-                    if (confirm('Удалить?')) {
-                        if (type === 'exhibition') {
-                            appData.exhibition = appData.exhibition.filter(i => i.id !== id);
-                        } else {
-                            appData.shop = appData.shop.filter(i => i.id !== id);
-                        }
-                        renderAll();
-                        editModal.classList.remove('active');
-                    }
-                });
-
-                document.getElementById('cancelModal').addEventListener('click', () => editModal.classList.remove('active'));
-            }
-
-            // Добавление новой работы с загрузкой фото
-            addExhibitionBtn.addEventListener('click', () => {
-                editModalContent.innerHTML = `
-                    <h3>Новая работа (выставка)</h3>
-                    <input id="modalTitle" placeholder="Название">
-                    <textarea id="modalDesc" placeholder="Описание" rows="3"></textarea>
-                    <div style="margin-bottom: 15px;">
-                        <label>Загрузить фото:</label>
-                        <input type="file" id="modalImageFile" accept="image/*">
-                    </div>
-                    <div class="modal-buttons">
-                        <button id="saveNewBtn">Добавить</button>
-                        <button class="cancel" id="cancelModal">Отмена</button>
-                    </div>
-                `;
-                editModal.classList.add('active');
-                
-                const fileInput = document.getElementById('modalImageFile');
-                let newImageData = null;
-
-                fileInput.addEventListener('change', async (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        newImageData = await readFileAsDataURL(file);
-                    }
-                });
-
-                document.getElementById('saveNewBtn').addEventListener('click', () => {
-                    appData.exhibition.push({
-                        id: generateId(),
-                        title: document.getElementById('modalTitle').value || 'Без названия',
-                        description: document.getElementById('modalDesc').value,
-                        image: newImageData
-                    });
-                    renderAll();
-                    editModal.classList.remove('active');
-                });
-                
-                document.getElementById('cancelModal').addEventListener('click', () => editModal.classList.remove('active'));
-            });
-
-            addShopBtn.addEventListener('click', () => {
-                editModalContent.innerHTML = `
-                    <h3>Новый товар</h3>
-                    <input id="modalTitle" placeholder="Название">
-                    <textarea id="modalDesc" placeholder="Описание" rows="3"></textarea>
-                    <div style="margin-bottom: 15px;">
-                        <label>Загрузить фото:</label>
-                        <input type="file" id="modalImageFile" accept="image/*">
-                    </div>
-                    <input id="modalPrice" placeholder="Цена (например, 45000 ₽)">
-                    <div class="modal-buttons">
-                        <button id="saveNewBtn">Добавить</button>
-                        <button class="cancel" id="cancelModal">Отмена</button>
-                    </div>
-                `;
-                editModal.classList.add('active');
-                
-                const fileInput = document.getElementById('modalImageFile');
-                let newImageData = null;
-
-                fileInput.addEventListener('change', async (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        newImageData = await readFileAsDataURL(file);
-                    }
-                });
-
-                document.getElementById('saveNewBtn').addEventListener('click', () => {
-                    appData.shop.push({
-                        id: generateId(),
-                        title: document.getElementById('modalTitle').value || 'Без названия',
-                        description: document.getElementById('modalDesc').value,
-                        image: newImageData,
-                        price: document.getElementById('modalPrice').value || 'цена по запросу'
-                    });
-                    renderAll();
-                    editModal.classList.remove('active');
-                });
-                
-                document.getElementById('cancelModal').addEventListener('click', () => editModal.classList.remove('active'));
-            });
-
-            // Редактирование контактов
             function openEditContactsModal() {
-                const c = appData.contacts;
-                editModalContent.innerHTML = `
+                const c = contacts;
+                const modal = document.getElementById('editModal');
+                const content = document.getElementById('editModalContent');
+                content.innerHTML = `
                     <h3>Редактировать контакты</h3>
                     <input id="modalTg" placeholder="Telegram (например @bibl)" value="${escapeHtml(c.tg || '')}">
                     <input id="modalWa" placeholder="WhatsApp (+7...)" value="${escapeHtml(c.wa || '')}">
@@ -979,41 +733,102 @@
                         <button class="cancel" id="cancelModal">Отмена</button>
                     </div>
                 `;
-                editModal.classList.add('active');
+                modal.classList.add('active');
                 
                 document.getElementById('saveContactsBtn').addEventListener('click', () => {
-                    appData.contacts = {
+                    contacts = {
                         tg: document.getElementById('modalTg').value,
                         wa: document.getElementById('modalWa').value,
                         vk: document.getElementById('modalVk').value,
                         tgk: document.getElementById('modalTgk').value
                     };
                     renderContacts();
-                    editModal.classList.remove('active');
+                    modal.classList.remove('active');
                 });
                 
-                document.getElementById('cancelModal').addEventListener('click', () => editModal.classList.remove('active'));
+                document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('active'));
             }
 
-            // Слушатели для кнопок
-            document.addEventListener('click', (e) => {
-                if (!isAdmin) return;
-                if (e.target.classList.contains('edit-btn') && e.target.dataset.type && e.target.dataset.id) {
-                    openEditItemModal(e.target.dataset.type, e.target.dataset.id);
+            document.getElementById('addExhibitionBtn').addEventListener('click', () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.onchange = async () => {
+                    const title = prompt('Название работы:') || 'Без названия';
+                    const description = prompt('Описание:') || '';
+                    const formData = new FormData();
+                    formData.append('title', title);
+                    formData.append('description', description);
+                    formData.append('section', 'exhibition');
+                    formData.append('image', input.files[0]);
+                    await addArtwork(formData);
+                };
+                input.click();
+            });
+
+            document.getElementById('addShopBtn').addEventListener('click', () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.onchange = async () => {
+                    const title = prompt('Название товара:') || 'Без названия';
+                    const description = prompt('Описание:') || '';
+                    const price = prompt('Цена:') || 'цена по запросу';
+                    const formData = new FormData();
+                    formData.append('title', title);
+                    formData.append('description', description);
+                    formData.append('price', price);
+                    formData.append('section', 'shop');
+                    formData.append('image', input.files[0]);
+                    await addArtwork(formData);
+                };
+                input.click();
+            });
+
+            document.getElementById('loginBtn').onclick = () => {
+                document.getElementById('loginModal').classList.add('active');
+            };
+            document.getElementById('cancelLogin').onclick = () => {
+                document.getElementById('loginModal').classList.remove('active');
+            };
+            document.getElementById('submitPassword').onclick = () => {
+                if (document.getElementById('passwordInput').value === ADMIN_PASSWORD) {
+                    isAdmin = true;
+                    document.body.classList.add('admin-mode');
+                    document.getElementById('loginModal').classList.remove('active');
+                    renderAll();
+                } else {
+                    alert('Неверный пароль');
                 }
+            };
+            document.getElementById('logoutBtn').onclick = () => {
+                isAdmin = false;
+                document.body.classList.remove('admin-mode');
+                renderAll();
+            };
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                    document.getElementById(btn.dataset.page + 'Page').classList.add('active');
+                });
             });
 
             window.addEventListener('click', (e) => {
-                if (e.target === loginModal) loginModal.classList.remove('active');
-                if (e.target === editModal) editModal.classList.remove('active');
-                if (e.target === zoomModal) zoomModal.classList.remove('active');
+                if (e.target === document.getElementById('loginModal')) {
+                    document.getElementById('loginModal').classList.remove('active');
+                }
+                if (e.target === document.getElementById('editModal')) {
+                    document.getElementById('editModal').classList.remove('active');
+                }
+                if (e.target === document.getElementById('zoomModal')) {
+                    document.getElementById('zoomModal').classList.remove('active');
+                }
             });
 
-            // Инициализация
-            renderAll();
-            updateAuthUI();
-
-            // --- ТЕТРИС (Минималистичная версия) ---
+            // Тетрис
             const canvas = document.getElementById('tetrisCanvas');
             const ctx = canvas.getContext('2d');
             const scoreElement = document.getElementById('gameScore');
@@ -1186,7 +1001,6 @@
                 gameInterval = setInterval(gameLoop, 300);
             }
 
-            // Управление с клавиатуры
             document.addEventListener('keydown', (e) => {
                 if (currentPage !== 'game' || !gameActive) return;
                 if (gamePaused) return;
@@ -1199,7 +1013,6 @@
                 }
             });
 
-            // Сенсорные кнопки для телефона
             document.getElementById('moveLeftBtn').addEventListener('click', () => {
                 if (currentPage === 'game' && gameActive && !gamePaused) {
                     movePiece(-1, 0);
@@ -1234,6 +1047,7 @@
                 gamePaused = !gamePaused;
             });
 
+            loadArtworks();
         })();
     </script>
 </body>

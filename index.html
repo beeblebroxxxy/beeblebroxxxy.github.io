@@ -579,15 +579,15 @@
         (function() {
             document.addEventListener('DOMContentLoaded', function() {
                 
-                // ⚡️ ВАШИ ССЫЛКИ НА GIST ⚡️
+                // ========== ТВОИ ЛИЧНЫЕ ДАННЫЕ ==========
+                const ADMIN_PASSWORD = 'BiblVeta098123';
                 const GIST_URL = 'https://gist.githubusercontent.com/beeblebroxxxy/0df2c53d4a0d051231f79b9729709ea6/raw/data.json';
                 const GIST_EDIT_URL = 'https://gist.github.com/beeblebroxxxy/0df2c53d4a0d051231f79b9729709ea6/edit';
                 
-                // Пароль для входа
-                const ADMIN_PASSWORD = 'BiblVeta098123';
+                // ========== СОСТОЯНИЕ ==========
                 let isAdmin = false;
                 
-                // Проверяем sessionStorage
+                // Проверяем sessionStorage при загрузке
                 const savedAdmin = sessionStorage.getItem('bibl_admin');
                 if (savedAdmin === 'true') {
                     isAdmin = true;
@@ -596,8 +596,13 @@
                 
                 // Данные сайта
                 let artworks = { exhibition: [], shop: [] };
-                let artistBio = "Загрузка...";
-                let contacts = { tg: "@gbibi_art", wa: "+7 999 123-45-67", vk: "vk.com/gbibi_art", tgk: "t.me/gbibi_channel" };
+                let artistBio = "Художница из Петербурга. Работаю с маслом, акрилом, текстилем.";
+                let contacts = { 
+                    tg: "@gbibi_art", 
+                    wa: "+7 999 123-45-67", 
+                    vk: "vk.com/gbibi_art", 
+                    tgk: "t.me/gbibi_channel" 
+                };
 
                 // Проверка URL параметра для входа
                 const urlParams = new URLSearchParams(window.location.search);
@@ -605,7 +610,7 @@
                     document.getElementById('loginModal')?.classList.add('active');
                 }
 
-                // ЗАГРУЗКА ДАННЫХ ИЗ GIST
+                // ========== ЗАГРУЗКА ДАННЫХ ИЗ GIST ==========
                 async function loadData() {
                     try {
                         console.log('🔄 Загружаем данные из Gist...');
@@ -645,7 +650,7 @@
                     renderAll();
                 }
 
-                // СОХРАНЕНИЕ ДАННЫХ
+                // ========== СОХРАНЕНИЕ ДАННЫХ ==========
                 function saveData() {
                     const data = {
                         artworks: artworks,
@@ -656,14 +661,13 @@
                     // Сохраняем в localStorage
                     localStorage.setItem('biblSiteData', JSON.stringify(data));
                     
-                    // Если мы в админке, показываем инструкцию
+                    // Если мы в админке, показываем окно с JSON
                     if (isAdmin) {
                         showGistUpdateModal(data);
                     }
-                }// МОДАЛКА ДЛЯ ОБНОВЛЕНИЯ GIST
+                }
 
-
-                // МОДАЛКА ДЛЯ ОБНОВЛЕНИЯ GIST
+                // ========== МОДАЛКА ДЛЯ ОБНОВЛЕНИЯ GIST ==========
                 function showGistUpdateModal(data) {
                     const jsonString = JSON.stringify(data, null, 2);
                     
@@ -702,7 +706,7 @@
                     document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
                 }
 
-                // Экранирование HTML
+                // ========== ЭКРАНИРОВАНИЕ HTML ==========
                 function escapeHtml(text) {
                     if (!text) return '';
                     return String(text)
@@ -713,7 +717,7 @@
                         .replace(/'/g, '&#039;');
                 }
 
-                // Валидация URL изображения
+                // ========== ВАЛИДАЦИЯ URL ==========
                 function isValidImageUrl(url) {
                     if (!url || typeof url !== 'string') return false;
                     url = url.trim().toLowerCase();
@@ -725,12 +729,12 @@
                     return false;
                 }
 
-                // Заглушка для изображений
+                // ========== ЗАГЛУШКА ДЛЯ ИЗОБРАЖЕНИЙ ==========
                 function getImagePlaceholder() {
                     return 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22200%22%20height%3D%22200%22%20viewBox%3D%220%200%20200%20200%22%3E%3Crect%20width%3D%22200%22%20height%3D%22200%22%20fill%3D%22%23f0f0f0%22%2F%3E%3Ctext%20x%3D%2220%22%20y%3D%22110%22%20font-family%3D%22Georgia%22%20font-size%3D%2216%22%20fill%3D%22%23666%22%3E%D0%98%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%BD%D0%B5%20%D0%B7%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%B8%D0%BB%D0%BE%D1%81%D1%8C%3C%2Ftext%3E%3C%2Fsvg%3E';
                 }
 
-                // Рендеринг
+                // ========== РЕНДЕРИНГ ==========
                 function renderAll() {
                     renderBio();
                     renderExhibition();
@@ -806,7 +810,7 @@
                     if (editContactsBtn) editContactsBtn.addEventListener('click', openEditContactsModal);
                 }
 
-                // Глобальные функции
+                // ========== ГЛОБАЛЬНЫЕ ФУНКЦИИ ==========
                 window.openZoom = function(img, title, desc) {
                     const zoomImg = document.getElementById('zoomImage');
                     zoomImg.src = img;
@@ -841,7 +845,7 @@
                     document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
                 };
 
-                // Модалка редактирования описания
+                // ========== МОДАЛКА РЕДАКТИРОВАНИЯ ОПИСАНИЯ ==========
                 function openEditBioModal() {
                     if (!isAdmin) return;
                     const modal = document.getElementById('editModal');
@@ -864,7 +868,7 @@
                     document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
                 }
 
-                // Модалка редактирования контактов
+                // ========== МОДАЛКА РЕДАКТИРОВАНИЯ КОНТАКТОВ ==========
                 function openEditContactsModal() {
                     if (!isAdmin) return;
                     const modal = document.getElementById('editModal');
@@ -895,7 +899,7 @@
                     document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
                 }
 
-                // Добавление работы
+                // ========== ДОБАВЛЕНИЕ РАБОТЫ ==========
                 document.getElementById('addExhibitionBtn')?.addEventListener('click', () => {
                     if (!isAdmin) return;
                     const modal = document.getElementById('editModal');
@@ -932,7 +936,7 @@
                     document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
                 });
 
-                // Добавление товара
+                // ========== ДОБАВЛЕНИЕ ТОВАРА ==========
                 document.getElementById('addShopBtn')?.addEventListener('click', () => {
                     if (!isAdmin) return;
                     const modal = document.getElementById('editModal');
@@ -972,7 +976,7 @@
                     document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
                 });
 
-                // Авторизация
+                // ========== АВТОРИЗАЦИЯ ==========
                 document.getElementById('cancelLogin')?.addEventListener('click', () => {
                     document.getElementById('loginModal').classList.remove('active');
                 });
@@ -993,7 +997,7 @@
                     }
                 });
 
-                // Навигация
+                // ========== НАВИГАЦИЯ ==========
                 document.querySelectorAll('.nav-btn').forEach(btn => {
                     btn.addEventListener('click', function() {
                         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -1003,7 +1007,7 @@
                     });
                 });
 
-                // Закрытие модалок
+                // ========== ЗАКРЫТИЕ МОДАЛОК ==========
                 window.addEventListener('click', (e) => {
                     const loginModal = document.getElementById('loginModal');
                     const editModal = document.getElementById('editModal');
@@ -1013,7 +1017,7 @@
                     if (zoomModal && e.target === zoomModal) zoomModal.classList.remove('active');
                 });
 
-                // ТЕТРИС
+                // ========== ТЕТРИС ==========
                 const canvas = document.getElementById('tetrisCanvas');
                 const ctx = canvas?.getContext('2d');
                 const scoreElement = document.getElementById('gameScore');
@@ -1280,7 +1284,7 @@
                     });
                 }
 
-                // Запуск
+                // ========== ЗАПУСК ==========
                 loadData();
             });
         })();

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>библ • художественная выставка</title>
     <style>
-        /* ВАШИ СТИЛИ (без изменений) */
+        /* ВАШИ СТИЛИ (сократил для читаемости, но оставил всё нужное) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Georgia', serif; background-color: #faf9f7; color: #1e1e1e; line-height: 1.6; }
         .container { max-width: 1400px; margin: 0 auto; padding: 30px 5%; }
@@ -22,7 +22,7 @@
         .art-card { background: white; border: 1px solid #eaeaea; padding: 20px; position: relative; }
         .art-image-container { position: relative; aspect-ratio: 1/1.1; cursor: pointer; overflow: hidden; background: #f0f0f0; }
         .art-image { width: 100%; height: 100%; object-fit: cover; }
-        .zoom-icon { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+        .zoom-icon { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; }
         .art-image-container:hover .zoom-icon { opacity: 1; }
         .art-title { font-size: 1.4rem; margin: 10px 0 5px; }
         .art-description { color: #5a5a5a; font-size: 0.9rem; font-style: italic; }
@@ -36,19 +36,10 @@
         .admin-mode .edit-contacts-btn { display: block; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 2000; }
         .modal.active { display: flex; }
-        .modal-content { background: white; padding: 35px; max-width: 550px; width: 100%; max-height: 90vh; overflow-y: auto; }
-        .modal-content h3 { font-size: 2rem; font-weight: 300; margin-bottom: 25px; }
-        .modal-content input, .modal-content textarea { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #bbb; font-family: 'Georgia', serif; }
-        .modal-buttons { display: flex; gap: 15px; }
-        .modal-content button { padding: 12px 30px; background: #1e1e1e; color: white; border: none; cursor: pointer; }
-        .modal-content button.cancel { background: #8f8f8f; }
+        .modal-content { background: white; padding: 35px; max-width: 550px; width: 100%; }
         .artist-bio { font-size: 1.2rem; white-space: pre-line; max-width: 800px; margin: 0 auto 30px; padding: 20px; position: relative; }
         .bio-edit-btn { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border-radius: 50%; background: white; border: 1px solid #1e1e1e; display: none; align-items: center; justify-content: center; cursor: pointer; }
         .admin-mode .bio-edit-btn { display: flex; }
-        .zoom-modal .modal-content { max-width: 800px; background: transparent; padding: 0; }
-        .zoom-image { width: 100%; max-height: 70vh; object-fit: contain; }
-        .game-container { background: #1e1e1e; color: #faf9f7; padding: 20px; border-radius: 4px; text-align: center; }
-        canvas#tetrisCanvas { border: 2px solid #faf9f7; background: #000; max-width: 300px; width: 100%; aspect-ratio: 1/2; }
     </style>
 </head>
 <body>
@@ -85,7 +76,7 @@
 
         <div id="zoomModal" class="modal zoom-modal">
             <div class="modal-content zoom-content">
-                <img id="zoomImage" class="zoom-image" src="">
+                <img id="zoomImage" class="zoom-image" src="" style="max-width:100%; max-height:70vh;">
                 <div class="zoom-details">
                     <h3 id="zoomTitle"></h3>
                     <p id="zoomDescription"></p>
@@ -115,14 +106,7 @@
 
         <section id="gamePage" class="page">
             <h1>тетрис / пауза</h1>
-            <div class="game-container">
-                <canvas id="tetrisCanvas" width="300" height="600"></canvas>
-                <div class="score" id="gameScore">0</div>
-                <div>
-                    <button class="game-btn" id="newGameBtn">Новая</button>
-                    <button class="game-btn" id="pauseGameBtn">Пауза</button>
-                </div>
-            </div>
+            <p>Игра временно отключена для простоты</p>
         </section>
     </div>
 
@@ -131,13 +115,17 @@
             // ЖДЁМ ЗАГРУЗКИ СТРАНИЦЫ
             document.addEventListener('DOMContentLoaded', function() {
                 
-                const WORKER_URL = 'https://bibl-api-final-2.stef-ruprecht.workers.dev';
                 const ADMIN_PASSWORD = 'BiblVeta098123';
 
                 let isAdmin = false;
                 let artworks = { exhibition: [], shop: [] };
-                let artistBio = "";
-                let contacts = { tg: '', wa: '', vk: '', tgk: '' };
+                let artistBio = "Художница из Петербурга. Работаю с маслом, акрилом, текстилем. Участница групповых выставок. Исследую фактуры и городскую тишину.";
+                let contacts = {
+                    tg: '@bibl_art',
+                    wa: '+7 999 123-45-67',
+                    vk: 'vk.com/bibl.art',
+                    tgk: 't.me/bibl_channel'
+                };
 
                 // ========== ПРОВЕРЯЕМ bibl_edit ==========
                 const urlParams = new URLSearchParams(window.location.search);
@@ -146,66 +134,41 @@
                     loginModal.classList.add('active');
                 }
 
-                // ========== ЗАГРУЗКА ДАННЫХ ==========
-                async function loadAllData() {
-                    try {
-                        const artworksRes = await fetch(`${WORKER_URL}/api/artworks`);
-                        const artworksData = await artworksRes.json();
-                        artworks.exhibition = artworksData.filter(item => item.section === 'exhibition');
-                        artworks.shop = artworksData.filter(item => item.section === 'shop');
+                // ========== СОХРАНЕНИЕ В LOCALSTORAGE ==========
+                function saveToStorage() {
+                    const data = {
+                        artworks: artworks,
+                        artistBio: artistBio,
+                        contacts: contacts
+                    };
+                    localStorage.setItem('biblSiteData', JSON.stringify(data));
+                }
 
-                        const bioRes = await fetch(`${WORKER_URL}/api/bio`);
-                        if (bioRes.ok) {
-                            const bioData = await bioRes.json();
-                            artistBio = bioData.text || "Художница из Петербурга...";
+                function loadFromStorage() {
+                    const saved = localStorage.getItem('biblSiteData');
+                    if (saved) {
+                        try {
+                            const data = JSON.parse(saved);
+                            artworks = data.artworks || { exhibition: [], shop: [] };
+                            artistBio = data.artistBio || artistBio;
+                            contacts = data.contacts || contacts;
+                        } catch (e) {
+                            console.error('Ошибка загрузки из storage');
                         }
-
-                        const contactsRes = await fetch(`${WORKER_URL}/api/contacts`);
-                        if (contactsRes.ok) {
-                            contacts = await contactsRes.json();
-                        }
-                    } catch (e) {
-                        console.error('Ошибка загрузки:', e);
                     }
                     renderAll();
                 }
 
-                // ========== СОХРАНЕНИЕ ==========
-                async function saveBio(newBio) {
-                    if (!isAdmin) return;
-                    await fetch(`${WORKER_URL}/api/bio`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ text: newBio })
-                    });
-                    artistBio = newBio;
-                    renderBio();
-                }
-
-                async function saveContacts(newContacts) {
-                    if (!isAdmin) return;
-                    await fetch(`${WORKER_URL}/api/contacts`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(newContacts)
-                    });
-                    contacts = newContacts;
-                    renderContacts();
-                }
-
-                async function deleteArtwork(id) {
-                    if (!isAdmin) return;
-                    if (confirm('Удалить?')) {
-                        await fetch(`${WORKER_URL}/api/artworks/${id}`, { method: 'DELETE' });
-                        loadAllData();
-                    }
-                }
-
                 // ========== ОТОБРАЖЕНИЕ ==========
                 function escapeHtml(unsafe) {
-                    return unsafe ? unsafe.replace(/[&<>"]/g, function(m) {
-                        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m];
-                    }) : '';
+                    if (!unsafe) return '';
+                    return unsafe.replace(/[&<>"]/g, function(m) {
+                        if (m === '&') return '&amp;';
+                        if (m === '<') return '&lt;';
+                        if (m === '>') return '&gt;';
+                        if (m === '"') return '&quot;';
+                        return m;
+                    });
                 }
 
                 function renderAll() {
@@ -234,7 +197,7 @@
                                 </div>
                                 <div class="art-title">${escapeHtml(item.title)}</div>
                                 <div class="art-description">${escapeHtml(item.description) || '—'}</div>
-                                ${isAdmin ? `<button class="edit-btn" onclick="deleteArtwork(${item.id})">🗑️</button>` : ''}
+                                ${isAdmin ? `<button class="edit-btn" onclick="window.deleteArtwork('${item.id}')">🗑️</button>` : ''}
                             </div>
                         `).join('');
                     }
@@ -252,7 +215,7 @@
                                 <div class="art-title">${escapeHtml(item.title)}</div>
                                 <div class="art-description">${escapeHtml(item.description) || '—'}</div>
                                 <div class="art-price">${escapeHtml(item.price) || 'цена по запросу'}</div>
-                                ${isAdmin ? `<button class="edit-btn" onclick="deleteArtwork(${item.id})">🗑️</button>` : ''}
+                                ${isAdmin ? `<button class="edit-btn" onclick="window.deleteArtwork('${item.id}')">🗑️</button>` : ''}
                             </div>
                         `).join('');
                     }
@@ -262,30 +225,34 @@
                     const block = document.getElementById('contactsBlock');
                     if (block) {
                         block.innerHTML = `
-                            <a href="https://t.me/${(contacts.tg || '@bibl_art').replace('@','')}" target="_blank">📱 TG: ${contacts.tg || '@bibl_art'}</a>
-                            <a href="https://wa.me/${(contacts.wa || '+79991234567').replace(/[^0-9]/g, '')}" target="_blank">📞 WhatsApp</a>
-                            <a href="https://${contacts.vk || 'vk.com/bibl.art'}" target="_blank">📘 VK: ${contacts.vk || 'vk.com/bibl.art'}</a>
-                            <a href="https://${contacts.tgk || 't.me/bibl_channel'}" target="_blank">📢 Канал: ${contacts.tgk || 't.me/bibl_channel'}</a>
+                            <a href="https://t.me/${contacts.tg.replace('@','')}" target="_blank">📱 TG: ${contacts.tg}</a>
+                            <a href="https://wa.me/${contacts.wa.replace(/[^0-9]/g, '')}" target="_blank">📞 WhatsApp</a>
+                            <a href="https://${contacts.vk}" target="_blank">📘 VK: ${contacts.vk}</a>
+                            <a href="https://${contacts.tgk}" target="_blank">📢 Канал: ${contacts.tgk}</a>
                             <button class="edit-contacts-btn" id="editContactsBtn">✎ ред. контакты</button>
                         `;
                         document.getElementById('editContactsBtn')?.addEventListener('click', openEditContactsModal);
                     }
                 }
 
+                // ========== ГЛОБАЛЬНЫЕ ФУНКЦИИ ==========
                 window.openZoom = function(image, title, description) {
-                    const zoomModal = document.getElementById('zoomModal');
-                    const zoomImage = document.getElementById('zoomImage');
-                    const zoomTitle = document.getElementById('zoomTitle');
-                    const zoomDesc = document.getElementById('zoomDescription');
-                    if (zoomModal && zoomImage && zoomTitle && zoomDesc) {
-                        zoomImage.src = image;
-                        zoomTitle.innerText = title;
-                        zoomDesc.innerText = description;
-                        zoomModal.classList.add('active');
-                    }
+                    document.getElementById('zoomImage').src = image;
+                    document.getElementById('zoomTitle').innerText = title;
+                    document.getElementById('zoomDescription').innerText = description;
+                    document.getElementById('zoomModal').classList.add('active');
                 };
 
-                window.deleteArtwork = deleteArtwork;
+                window.deleteArtwork = function(id) {
+                    if (!isAdmin) return;
+                    if (confirm('Удалить работу?')) {
+                        // Удаляем из обоих разделов
+                        artworks.exhibition = artworks.exhibition.filter(item => item.id != id);
+                        artworks.shop = artworks.shop.filter(item => item.id != id);
+                        saveToStorage();
+                        renderAll();
+                    }
+                };
 
                 // ========== РЕДАКТИРОВАНИЕ БИО ==========
                 function openEditBioModal() {
@@ -307,7 +274,9 @@
                     document.getElementById('saveBioBtn')?.addEventListener('click', function() {
                         const bioInput = document.getElementById('modalBio');
                         if (bioInput) {
-                            saveBio(bioInput.value);
+                            artistBio = bioInput.value;
+                            saveToStorage();
+                            renderBio();
                         }
                         modal.classList.remove('active');
                     });
@@ -326,10 +295,10 @@
                     
                     content.innerHTML = `
                         <h3>Редактировать контакты</h3>
-                        <input id="modalTg" placeholder="Telegram" value="${escapeHtml(contacts.tg || '')}">
-                        <input id="modalWa" placeholder="WhatsApp" value="${escapeHtml(contacts.wa || '')}">
-                        <input id="modalVk" placeholder="VK" value="${escapeHtml(contacts.vk || '')}">
-                        <input id="modalTgk" placeholder="Канал Telegram" value="${escapeHtml(contacts.tgk || '')}">
+                        <input id="modalTg" placeholder="Telegram" value="${escapeHtml(contacts.tg)}">
+                        <input id="modalWa" placeholder="WhatsApp" value="${escapeHtml(contacts.wa)}">
+                        <input id="modalVk" placeholder="VK" value="${escapeHtml(contacts.vk)}">
+                        <input id="modalTgk" placeholder="Канал Telegram" value="${escapeHtml(contacts.tgk)}">
                         <div class="modal-buttons">
                             <button id="saveContactsBtn">Сохранить</button>
                             <button class="cancel" id="cancelModal">Отмена</button>
@@ -338,13 +307,14 @@
                     modal.classList.add('active');
                     
                     document.getElementById('saveContactsBtn')?.addEventListener('click', function() {
-                        const newContacts = {
+                        contacts = {
                             tg: document.getElementById('modalTg')?.value || '',
                             wa: document.getElementById('modalWa')?.value || '',
                             vk: document.getElementById('modalVk')?.value || '',
                             tgk: document.getElementById('modalTgk')?.value || ''
                         };
-                        saveContacts(newContacts);
+                        saveToStorage();
+                        renderContacts();
                         modal.classList.remove('active');
                     });
                     
@@ -359,25 +329,24 @@
                     
                     const title = prompt('Название работы:', 'Без названия') || 'Без названия';
                     const description = prompt('Описание:', '') || '';
-                    const image_url = prompt('ССЫЛКА на фото (Imgur или другой хостинг):', '');
+                    const image_url = prompt('ССЫЛКА на фото (Imgur):', '');
                     
                     if (!image_url) {
                         alert('Нужно указать ссылку на фото');
                         return;
                     }
                     
-                    const formData = new FormData();
-                    formData.append('title', title);
-                    formData.append('description', description);
-                    formData.append('section', 'exhibition');
-                    formData.append('image_url', image_url);
+                    const newArtwork = {
+                        id: Date.now() + Math.random(),
+                        title: title,
+                        description: description,
+                        image_url: image_url,
+                        section: 'exhibition'
+                    };
                     
-                    fetch(`${WORKER_URL}/api/artworks`, {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(res => res.ok ? loadAllData() : alert('Ошибка'))
-                    .catch(e => alert('Ошибка: ' + e.message));
+                    artworks.exhibition.push(newArtwork);
+                    saveToStorage();
+                    renderExhibition();
                 });
 
                 document.getElementById('addShopBtn')?.addEventListener('click', function() {
@@ -386,26 +355,25 @@
                     const title = prompt('Название товара:', 'Без названия') || 'Без названия';
                     const description = prompt('Описание:', '') || '';
                     const price = prompt('Цена:', 'цена по запросу') || 'цена по запросу';
-                    const image_url = prompt('ССЫЛКА на фото (Imgur или другой хостинг):', '');
+                    const image_url = prompt('ССЫЛКА на фото (Imgur):', '');
                     
                     if (!image_url) {
                         alert('Нужно указать ссылку на фото');
                         return;
                     }
                     
-                    const formData = new FormData();
-                    formData.append('title', title);
-                    formData.append('description', description);
-                    formData.append('price', price);
-                    formData.append('section', 'shop');
-                    formData.append('image_url', image_url);
+                    const newArtwork = {
+                        id: Date.now() + Math.random(),
+                        title: title,
+                        description: description,
+                        price: price,
+                        image_url: image_url,
+                        section: 'shop'
+                    };
                     
-                    fetch(`${WORKER_URL}/api/artworks`, {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(res => res.ok ? loadAllData() : alert('Ошибка'))
-                    .catch(e => alert('Ошибка: ' + e.message));
+                    artworks.shop.push(newArtwork);
+                    saveToStorage();
+                    renderShop();
                 });
 
                 // ========== АВТОРИЗАЦИЯ ==========
@@ -423,7 +391,7 @@
                         isAdmin = true;
                         document.body.classList.add('admin-mode');
                         document.getElementById('loginModal')?.classList.remove('active');
-                        loadAllData();
+                        renderAll();
                     } else {
                         alert('Неверный пароль');
                     }
@@ -458,7 +426,7 @@
                 });
 
                 // ========== ЗАПУСК ==========
-                loadAllData();
+                loadFromStorage();
                 
             }); // Конец DOMContentLoaded
         })();

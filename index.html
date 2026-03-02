@@ -2,49 +2,494 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>библ • художественная выставка</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Georgia', serif; background-color: #faf9f7; color: #1e1e1e; line-height: 1.6; }
-        .container { max-width: 1400px; margin: 0 auto; padding: 30px 5%; }
-        header { border-bottom: 1px solid #d0d0d0; padding-bottom: 20px; margin-bottom: 30px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
-        .logo { font-size: 2.8rem; font-weight: 300; letter-spacing: 4px; text-transform: lowercase; border: 1px solid #333; padding: 5px 15px; }
-        nav { display: flex; gap: 15px; }
-        nav button { background: none; border: none; font-size: 1.2rem; font-family: 'Georgia', serif; cursor: pointer; padding: 5px 0; border-bottom: 2px solid transparent; }
-        nav button.active { border-bottom: 2px solid #1e1e1e; }
-        .auth-area button { background: none; border: 1px solid #aaa; padding: 8px 16px; cursor: pointer; }
-        .page { display: none; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background-color: #faf9f7;
+            color: #1e1e1e;
+            line-height: 1.6;
+            font-size: 16px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 5%;
+        }
+
+        header {
+            border-bottom: 1px solid #d0d0d0;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            font-size: clamp(1.8rem, 6vw, 2.8rem);
+            font-weight: 300;
+            letter-spacing: 4px;
+            text-transform: lowercase;
+            border: 1px solid #333;
+            padding: 5px 15px;
+            display: inline-block;
+            line-height: 1.2;
+            cursor: pointer;
+        }
+
+        nav {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            font-family: 'Georgia', serif;
+            color: #3a3a3a;
+            cursor: pointer;
+            padding: 5px 0;
+            border-bottom: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        nav button:hover {
+            border-bottom: 2px solid #aaa;
+        }
+
+        nav button.active {
+            border-bottom: 2px solid #1e1e1e;
+            font-weight: bold;
+        }
+
+        .page { display: none; min-height: 50vh; }
         .page.active { display: block; }
-        h1 { font-size: 2.8rem; font-weight: 300; margin-bottom: 30px; border-left: 3px solid #1e1e1e; padding-left: 20px; }
-        .art-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px; }
-        .art-card { background: white; border: 1px solid #eaeaea; padding: 20px; position: relative; }
-        .art-image-container { position: relative; aspect-ratio: 1/1.1; cursor: pointer; overflow: hidden; background: #f0f0f0; }
-        .art-image { width: 100%; height: 100%; object-fit: cover; }
-        .zoom-icon { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; }
+
+        h1 {
+            font-weight: 300;
+            font-size: clamp(2rem, 5vw, 2.8rem);
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            border-left: 3px solid #1e1e1e;
+            padding-left: 20px;
+        }
+
+        .art-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 30px 25px;
+            margin-top: 30px;
+        }
+
+        .art-card {
+            background-color: white;
+            border: 1px solid #eaeaea;
+            padding: 20px 15px 20px 15px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .art-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.05);
+        }
+
+        .art-image-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1.1;
+            margin-bottom: 15px;
+            cursor: pointer;
+            overflow: hidden;
+            background: #f0f0f0;
+        }
+
+        .art-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.3s;
+        }
+
+        .art-image-container:hover .art-image {
+            transform: scale(1.02);
+        }
+
+        .image-error {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eee;
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .zoom-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.9);
+            border: 1px solid #1e1e1e;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+
         .art-image-container:hover .zoom-icon { opacity: 1; }
-        .art-title { font-size: 1.4rem; margin: 10px 0 5px; }
-        .art-description { color: #5a5a5a; font-size: 0.9rem; font-style: italic; }
-        .art-price { font-size: 1.3rem; color: #2b5e2b; border-top: 1px dashed #ccc; padding-top: 12px; margin-top: 10px; }
-        .contact-block { margin-top: 40px; padding: 20px; background: #f3f2f0; display: flex; flex-wrap: wrap; gap: 25px; justify-content: center; position: relative; }
-        .admin-mode .edit-btn { display: flex; }
-        .edit-btn { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border-radius: 50%; background: white; border: 1px solid #1e1e1e; display: none; align-items: center; justify-content: center; cursor: pointer; }
-        .add-btn { background: white; border: 1px solid #1e1e1e; border-radius: 40px; padding: 8px 20px; margin: 20px 0; cursor: pointer; display: none; }
-        .admin-mode .add-btn { display: inline-block; }
-        .edit-contacts-btn { position: absolute; top: -18px; right: 20px; background: #1e1e1e; color: white; border: none; border-radius: 30px; padding: 8px 20px; cursor: pointer; display: none; }
-        .admin-mode .edit-contacts-btn { display: block; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 2000; }
+
+        .art-title {
+            font-size: 1.4rem;
+            font-weight: 400;
+            margin-bottom: 5px;
+        }
+
+        .art-description {
+            color: #5a5a5a;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+
+        .art-price {
+            font-size: 1.3rem;
+            font-weight: 300;
+            color: #2b5e2b;
+            margin-top: auto;
+            border-top: 1px dashed #ccc;
+            padding-top: 12px;
+        }
+
+        .contact-block {
+            margin-top: 40px;
+            padding: 25px 20px;
+            background: #f3f2f0;
+            border: 1px solid #d4d4d4;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 25px;
+            position: relative;
+        }
+
+        .contact-block a {
+            color: #1e1e1e;
+            text-decoration: none;
+            border-bottom: 1px dotted #777;
+            transition: border-bottom 0.2s;
+        }
+
+        .contact-block a:hover {
+            border-bottom: 1px solid #1e1e1e;
+        }
+
+        .edit-btn, .add-btn, .edit-contacts-btn, .edit-bio-btn {
+            background: white;
+            border: 1px solid #1e1e1e;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .edit-btn:hover, .add-btn:hover, .edit-contacts-btn:hover, .edit-bio-btn:hover {
+            background: #1e1e1e;
+            color: white;
+        }
+
+        .admin-mode .edit-btn,
+        .admin-mode .add-btn,
+        .admin-mode .edit-contacts-btn,
+        .admin-mode .edit-bio-btn {
+            display: flex;
+        }
+
+        .add-btn {
+            border-radius: 40px;
+            width: auto;
+            padding: 0 20px;
+            gap: 5px;
+            margin: 20px 0 30px;
+            display: none;
+        }
+
+        .admin-mode .add-btn {
+            display: inline-flex;
+        }
+
+        .edit-contacts-btn {
+            position: absolute;
+            top: -18px;
+            right: 20px;
+            background: #1e1e1e;
+            color: white;
+            border: none;
+            width: auto;
+            border-radius: 30px;
+            padding: 8px 20px;
+            font-size: 0.9rem;
+            gap: 5px;
+        }
+
+        .edit-contacts-btn:hover {
+            background: #333;
+        }
+
+        .artist-bio {
+            font-size: 1.2rem;
+            white-space: pre-line;
+            max-width: 800px;
+            margin: 0 auto 30px;
+            padding: 30px;
+            background: rgba(255,255,255,0.7);
+            position: relative;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            line-height: 1.8;
+        }
+        
+        .admin-mode .artist-bio { 
+            border: 1px dashed #aaa;
+        }
+
+        .edit-bio-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 15px;
+            backdrop-filter: blur(3px);
+        }
         .modal.active { display: flex; }
-        .modal-content { background: white; padding: 35px; max-width: 550px; width: 100%; }
-        .artist-bio { font-size: 1.2rem; white-space: pre-line; max-width: 800px; margin: 0 auto 30px; padding: 20px; position: relative; }
-        .bio-edit-btn { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border-radius: 50%; background: white; border: 1px solid #1e1e1e; display: none; align-items: center; justify-content: center; cursor: pointer; }
-        .admin-mode .bio-edit-btn { display: flex; }
-        .zoom-modal .modal-content { max-width: 800px; background: transparent; padding: 0; }
-        .zoom-image { width: 100%; max-height: 70vh; object-fit: contain; }
+
+        .modal-content {
+            background: white;
+            padding: 35px 30px;
+            max-width: 550px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 4px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .modal-content h3 {
+            font-weight: 300;
+            font-size: 2rem;
+            margin-bottom: 25px;
+            border-left: 3px solid #1e1e1e;
+            padding-left: 15px;
+        }
+
+        .modal-content input,
+        .modal-content textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #bbb;
+            font-family: 'Georgia', serif;
+            font-size: 1rem;
+            border-radius: 2px;
+        }
+
+        .modal-content input:focus,
+        .modal-content textarea:focus {
+            outline: none;
+            border-color: #1e1e1e;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .modal-content button {
+            padding: 12px 30px;
+            background: #1e1e1e;
+            color: white;
+            border: none;
+            font-family: 'Georgia', serif;
+            cursor: pointer;
+            flex: 1 1 auto;
+            transition: background 0.2s;
+            border-radius: 2px;
+        }
+
+        .modal-content button:hover {
+            background: #333;
+        }
+
+        .modal-content button.cancel {
+            background: #8f8f8f;
+        }
+
+        .modal-content button.cancel:hover {
+            background: #a0a0a0;
+        }
+
+        .modal-content button.delete-confirm {
+            background: #c0392b;
+        }
+
+        .modal-content button.delete-confirm:hover {
+            background: #a93226;
+        }
+
+        .zoom-modal .modal-content {
+            max-width: 900px;
+            background: white;
+            padding: 20px;
+        }
+
+        .zoom-image {
+            width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+            background: #f5f5f5;
+        }
+
+        .zoom-details {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .zoom-details h3 {
+            font-size: 1.8rem;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 30px;
+            background: #1e1e1e;
+            color: #faf9f7;
+            border-radius: 8px;
+        }
+
+        canvas#tetrisCanvas {
+            border: 2px solid #faf9f7;
+            background: #000;
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            aspect-ratio: 1/2;
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .game-btn {
+            padding: 10px 20px;
+            background: #faf9f7;
+            color: #1e1e1e;
+            border: none;
+            font-family: 'Georgia', serif;
+            cursor: pointer;
+            border-radius: 2px;
+            min-width: 60px;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .game-btn:hover { 
+            background: #fff;
+            transform: scale(1.05);
+        }
+
+        .mobile-controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .mobile-controls .game-btn {
+            width: 70px;
+            height: 70px;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #333;
+            color: #faf9f7;
+            border: 1px solid #faf9f7;
+        }
+
+        .mobile-controls .game-btn:hover {
+            background: #444;
+        }
+
+        .score {
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+        }
+
+        @media (max-width: 600px) {
+            header { flex-direction: column; align-items: flex-start; }
+            nav { width: 100%; justify-content: space-around; }
+            .art-grid { gap: 20px; }
+            .contact-block { flex-direction: column; gap: 15px; }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container" id="app">
         <header>
             <div class="logo">библ</div>
             <nav>
@@ -53,12 +498,9 @@
                 <button class="nav-btn" data-page="shop">Магазин</button>
                 <button class="nav-btn" data-page="game">Игра</button>
             </nav>
-            <div class="auth-area">
-                <button id="loginBtn">Войти</button>
-                <button id="logoutBtn" style="display:none;">Выйти</button>
-            </div>
         </header>
 
+        <!-- Модалка для входа (скрыта, вызывается только через URL) -->
         <div id="loginModal" class="modal">
             <div class="modal-content">
                 <h3>доступ</h3>
@@ -70,13 +512,15 @@
             </div>
         </div>
 
+        <!-- Универсальная модалка для редактирования -->
         <div id="editModal" class="modal">
             <div class="modal-content" id="editModalContent"></div>
         </div>
 
+        <!-- Модалка для увеличения изображения -->
         <div id="zoomModal" class="modal zoom-modal">
             <div class="modal-content zoom-content">
-                <img id="zoomImage" class="zoom-image" src="">
+                <img id="zoomImage" class="zoom-image" src="" alt="Увеличенное изображение">
                 <div class="zoom-details">
                     <h3 id="zoomTitle"></h3>
                     <p id="zoomDescription"></p>
@@ -85,27 +529,49 @@
             </div>
         </div>
 
+        <!-- Страница "О художнице" -->
         <section id="aboutPage" class="page active">
             <h1>библ</h1>
             <div class="artist-bio" id="artistBioDisplay"></div>
         </section>
 
+        <!-- Страница "Выставка" -->
         <section id="exhibitionPage" class="page">
             <h1>выставка</h1>
-            <button class="add-btn" id="addExhibitionBtn">➕ Добавить работу</button>
+            <div class="admin-actions">
+                <button class="add-btn" id="addExhibitionBtn">➕ Добавить работу</button>
+            </div>
             <div class="art-grid" id="exhibitionGrid"></div>
         </section>
 
+        <!-- Страница "Магазин" -->
         <section id="shopPage" class="page">
             <h1>магазин</h1>
-            <button class="add-btn" id="addShopBtn">➕ Добавить товар</button>
+            <div class="admin-actions">
+                <button class="add-btn" id="addShopBtn">➕ Добавить товар</button>
+            </div>
             <div class="art-grid" id="shopGrid"></div>
             <div class="contact-block" id="contactsBlock"></div>
         </section>
 
+        <!-- Страница "Игра" -->
         <section id="gamePage" class="page">
             <h1>тетрис / пауза</h1>
-            <p>Игра временно отключена</p>
+            <div class="game-container">
+                <canvas id="tetrisCanvas" width="300" height="600"></canvas>
+                <div class="score" id="gameScore">0</div>
+                <div class="game-controls">
+                    <button class="game-btn" id="newGameBtn">Новая</button>
+                    <button class="game-btn" id="pauseGameBtn">Пауза</button>
+                </div>
+                <div class="mobile-controls">
+                    <button class="game-btn" id="moveLeftBtn">←</button>
+                    <button class="game-btn" id="rotateBtn">↻</button>
+                    <button class="game-btn" id="moveRightBtn">→</button>
+                    <button class="game-btn" id="moveDownBtn">↓</button>
+                </div>
+                <p style="color: #aaa;">← → движение, ↑ поворот, ↓ ускорение</p>
+            </div>
         </section>
     </div>
 
@@ -113,12 +579,25 @@
         (function() {
             document.addEventListener('DOMContentLoaded', function() {
                 
+                // Пароль для входа в админку
                 const ADMIN_PASSWORD = 'BiblVeta098123';
                 let isAdmin = false;
                 
+                // Проверяем sessionStorage при загрузке
+                const savedAdmin = sessionStorage.getItem('bibl_admin');
+                if (savedAdmin === 'true') {
+                    isAdmin = true;
+                    document.body.classList.add('admin-mode');
+                }
+                
                 // Данные сайта
-                let artworks = { exhibition: [], shop: [] };
+                let artworks = { 
+                    exhibition: [], 
+                    shop: [] 
+                };
+                
                 let artistBio = "Художница из Петербурга. Работаю с маслом, акрилом, текстилем. Участница групповых выставок. Исследую фактуры и городскую тишину.";
+                
                 let contacts = {
                     tg: '@bibl_art',
                     wa: '+7 999 123-45-67',
@@ -126,7 +605,13 @@
                     tgk: 't.me/bibl_channel'
                 };
 
-                // Загрузка из localStorage
+                // Проверка URL параметра для входа
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('bibl_edit')) {
+                    document.getElementById('loginModal')?.classList.add('active');
+                }
+
+                // Загрузка данных из localStorage
                 function loadData() {
                     const saved = localStorage.getItem('biblSiteData');
                     if (saved) {
@@ -135,12 +620,14 @@
                             artworks = data.artworks || { exhibition: [], shop: [] };
                             artistBio = data.artistBio || artistBio;
                             contacts = data.contacts || contacts;
-                        } catch (e) {}
+                        } catch (e) {
+                            console.error('Ошибка загрузки данных:', e);
+                        }
                     }
                     renderAll();
                 }
 
-                // Сохранение в localStorage
+                // Сохранение данных в localStorage
                 function saveData() {
                     localStorage.setItem('biblSiteData', JSON.stringify({
                         artworks: artworks,
@@ -149,77 +636,154 @@
                     }));
                 }
 
-                // Проверка bibl_edit
-                if (new URLSearchParams(window.location.search).has('bibl_edit')) {
-                    document.getElementById('loginModal')?.classList.add('active');
-                }
-
-                // Отображение
+                // Экранирование HTML
                 function escapeHtml(text) {
                     if (!text) return '';
-                    return text.replace(/[&<>"]/g, function(m) {
-                        return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[m];
-                    });
+                    return String(text)
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#039;');
                 }
 
+                // Валидация URL изображения
+                function isValidImageUrl(url) {
+                    if (!url || typeof url !== 'string') return false;
+                    url = url.trim().toLowerCase();
+                    
+                    // Проверяем, что это http/https ссылка
+                    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                        return false;
+                    }
+                    
+                    // Проверяем расширения файлов
+                    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.avif'];
+                    if (imageExtensions.some(ext => url.includes(ext))) {
+                        return true;
+                    }
+                    
+                    // Проверяем известные хостинги изображений
+                    const imageHosts = ['imgur.com', 'imgsafe.org', 'postimg.cc', 'ibb.co', 'flic.kr', 'img.peek'];
+                    if (imageHosts.some(host => url.includes(host))) {
+                        return true;
+                    }
+                    
+                    return false;
+                }
+
+                // Заглушка для изображений
+                function getImagePlaceholder() {
+                    return 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22200%22%20height%3D%22200%22%20viewBox%3D%220%200%20200%20200%22%3E%3Crect%20width%3D%22200%22%20height%3D%22200%22%20fill%3D%22%23f0f0f0%22%2F%3E%3Ctext%20x%3D%2220%22%20y%3D%22110%22%20font-family%3D%22Georgia%22%20font-size%3D%2216%22%20fill%3D%22%23666%22%3E%D0%98%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%BD%D0%B5%20%D0%B7%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%B8%D0%BB%D0%BE%D1%81%D1%8C%3C%2Ftext%3E%3C%2Fsvg%3E';
+                }
+
+                // Рендеринг всех страниц
                 function renderAll() {
-                    // Био
+                    renderBio();
+                    renderExhibition();
+                    renderShop();
+                    renderContacts();
+                }
+
+                function renderBio() {
                     const bioDisplay = document.getElementById('artistBioDisplay');
-                    if (bioDisplay) {
-                        bioDisplay.innerHTML = escapeHtml(artistBio) + '<button class="bio-edit-btn" id="editBioBtn">✎</button>';
-                        document.getElementById('editBioBtn')?.addEventListener('click', editBio);
+                    if (!bioDisplay) return;
+                    
+                    bioDisplay.innerHTML = `
+                        ${escapeHtml(artistBio).replace(/\n/g, '<br>')}
+                        <button class="edit-bio-btn edit-btn" id="editBioBtn" title="Редактировать описание">✎</button>
+                    `;
+                    
+                    const editBioBtn = document.getElementById('editBioBtn');
+                    if (editBioBtn) {
+                        editBioBtn.addEventListener('click', openEditBioModal);
                     }
+                }
 
-                    // Выставка
+                function renderExhibition() {
                     const exhGrid = document.getElementById('exhibitionGrid');
-                    if (exhGrid) {
-                        exhGrid.innerHTML = artworks.exhibition.map(item => `
-                            <div class="art-card">
-                                <div class="art-image-container" onclick="window.openZoom('${item.image_url}', '${escapeHtml(item.title)}', '${escapeHtml(item.description)}')">
-                                    <img class="art-image" src="${item.image_url}" alt="${escapeHtml(item.title)}">
-                                    <div class="zoom-icon">🔍</div>
-                                </div>
-                                <div class="art-title">${escapeHtml(item.title)}</div>
-                                <div class="art-description">${escapeHtml(item.description) || '—'}</div>
-                                ${isAdmin ? `<button class="edit-btn" onclick="window.deleteItem('${item.id}', 'exhibition')">🗑️</button>` : ''}
-                            </div>
-                        `).join('');
+                    if (!exhGrid) return;
+
+                    if (artworks.exhibition.length === 0) {
+                        exhGrid.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">В разделе пока нет работ</p>';
+                        return;
                     }
 
-                    // Магазин
+                    exhGrid.innerHTML = artworks.exhibition.map(item => {
+                        const safeTitle = escapeHtml(item.title);
+                        const safeDesc = escapeHtml(item.description || '—');
+                        const safeImage = escapeHtml(item.image_url);
+                        
+                        return `
+                        <div class="art-card" data-id="${item.id}">
+                            <div class="art-image-container" onclick="window.openZoom('${safeImage}', '${safeTitle}', '${safeDesc}')">
+                                <img class="art-image" src="${safeImage}" alt="${safeTitle}" 
+                                     onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML += '<div class=\\'image-error\\'>🖼️ Изображение не загрузилось</div>';">
+                                <div class="zoom-icon">🔍</div>
+                            </div>
+                            <div class="art-title">${safeTitle}</div>
+                            <div class="art-description">${safeDesc}</div>
+                            ${isAdmin ? `<button class="edit-btn" onclick="window.deleteItem('${item.id}', 'exhibition')" title="Удалить">🗑️</button>` : ''}
+                        </div>
+                    `}).join('');
+                }
+
+                function renderShop() {
                     const shopGrid = document.getElementById('shopGrid');
-                    if (shopGrid) {
-                        shopGrid.innerHTML = artworks.shop.map(item => `
-                            <div class="art-card">
-                                <div class="art-image-container" onclick="window.openZoom('${item.image_url}', '${escapeHtml(item.title)}', '${escapeHtml(item.description)}')">
-                                    <img class="art-image" src="${item.image_url}" alt="${escapeHtml(item.title)}">
-                                    <div class="zoom-icon">🔍</div>
-                                </div>
-                                <div class="art-title">${escapeHtml(item.title)}</div>
-                                <div class="art-description">${escapeHtml(item.description) || '—'}</div>
-                                <div class="art-price">${escapeHtml(item.price) || 'цена по запросу'}</div>
-                                ${isAdmin ? `<button class="edit-btn" onclick="window.deleteItem('${item.id}', 'shop')">🗑️</button>` : ''}
-                            </div>
-                        `).join('');
+                    if (!shopGrid) return;
+
+                    if (artworks.shop.length === 0) {
+                        shopGrid.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">В магазине пока нет товаров</p>';
+                        return;
                     }
 
-                    // Контакты
+                    shopGrid.innerHTML = artworks.shop.map(item => {
+                        const safeTitle = escapeHtml(item.title);
+                        const safeDesc = escapeHtml(item.description || '—');
+                        const safePrice = escapeHtml(item.price || 'цена по запросу');
+                        const safeImage = escapeHtml(item.image_url);
+                        
+                        return `
+                        <div class="art-card" data-id="${item.id}">
+                            <div class="art-image-container" onclick="window.openZoom('${safeImage}', '${safeTitle}', '${safeDesc}')">
+                                <img class="art-image" src="${safeImage}" alt="${safeTitle}"
+                                     onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML += '<div class=\\'image-error\\'>🖼️ Изображение не загрузилось</div>';">
+                                <div class="zoom-icon">🔍</div>
+                            </div>
+                            <div class="art-title">${safeTitle}</div>
+                            <div class="art-description">${safeDesc}</div>
+                            <div class="art-price">${safePrice}</div>
+                            ${isAdmin ? `<button class="edit-btn" onclick="window.deleteItem('${item.id}', 'shop')" title="Удалить">🗑️</button>` : ''}
+                        </div>
+                    `}).join('');
+                }
+
+                function renderContacts() {
                     const contactsBlock = document.getElementById('contactsBlock');
-                    if (contactsBlock) {
-                        contactsBlock.innerHTML = `
-                            <a href="https://t.me/${contacts.tg.replace('@','')}" target="_blank">📱 TG: ${contacts.tg}</a>
-                            <a href="https://wa.me/${contacts.wa.replace(/[^0-9]/g, '')}" target="_blank">📞 WhatsApp</a>
-                            <a href="https://${contacts.vk}" target="_blank">📘 VK: ${contacts.vk}</a>
-                            <a href="https://${contacts.tgk}" target="_blank">📢 Канал: ${contacts.tgk}</a>
-                            <button class="edit-contacts-btn" id="editContactsBtn">✎ ред. контакты</button>
-                        `;
-                        document.getElementById('editContactsBtn')?.addEventListener('click', editContacts);
+                    if (!contactsBlock) return;
+
+                    contactsBlock.innerHTML = `
+                        <a href="https://t.me/${contacts.tg.replace('@', '')}" target="_blank" rel="noopener noreferrer">📱 TG: ${escapeHtml(contacts.tg)}</a>
+                        <a href="https://wa.me/${contacts.wa.replace(/[^0-9]/g, '')}" target="_blank" rel="noopener noreferrer">📞 WhatsApp</a>
+                        <a href="https://${contacts.vk}" target="_blank" rel="noopener noreferrer">📘 VK: ${escapeHtml(contacts.vk)}</a>
+                        <a href="https://${contacts.tgk}" target="_blank" rel="noopener noreferrer">📢 Канал: ${escapeHtml(contacts.tgk)}</a>
+                        <button class="edit-contacts-btn" id="editContactsBtn">✎ ред. контакты</button>
+                    `;
+                    
+                    const editContactsBtn = document.getElementById('editContactsBtn');
+                    if (editContactsBtn) {
+                        editContactsBtn.addEventListener('click', openEditContactsModal);
                     }
                 }
 
                 // Глобальные функции
                 window.openZoom = function(img, title, desc) {
-                    document.getElementById('zoomImage').src = img;
+                    const zoomImg = document.getElementById('zoomImage');
+                    zoomImg.src = img;
+                    zoomImg.onerror = function() {
+                        this.src = getImagePlaceholder();
+                        this.style.objectFit = 'contain';
+                    };
                     document.getElementById('zoomTitle').innerText = title;
                     document.getElementById('zoomDescription').innerText = desc;
                     document.getElementById('zoomModal').classList.add('active');
@@ -227,26 +791,47 @@
 
                 window.deleteItem = function(id, section) {
                     if (!isAdmin) return;
-                    if (confirm('Удалить?')) {
-                        artworks[section] = artworks[section].filter(item => item.id != id);
-                        saveData();
-                        renderAll();
-                    }
-                };
-
-                // Редактирование био
-                function editBio() {
-                    if (!isAdmin) return;
+                    
                     const modal = document.getElementById('editModal');
                     const content = document.getElementById('editModalContent');
+                    
+                    content.innerHTML = `
+                        <h3>Подтверждение</h3>
+                        <p style="margin-bottom: 30px; font-size: 1.2rem;">Удалить эту работу?</p>
+                        <div class="modal-buttons">
+                            <button class="delete-confirm" id="confirmDelete">Удалить</button>
+                            <button class="cancel" id="cancelModal">Отмена</button>
+                        </div>
+                    `;
+                    
+                    modal.classList.add('active');
+                    
+                    document.getElementById('confirmDelete').onclick = () => {
+                        artworks[section] = artworks[section].filter(item => String(item.id) !== String(id));
+                        saveData();
+                        renderAll();
+                        modal.classList.remove('active');
+                    };
+                    
+                    document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
+                };
+
+                // Модалка редактирования описания
+                function openEditBioModal() {
+                    if (!isAdmin) return;
+                    
+                    const modal = document.getElementById('editModal');
+                    const content = document.getElementById('editModalContent');
+                    
                     content.innerHTML = `
                         <h3>Редактировать описание</h3>
-                        <textarea id="modalBio" rows="6">${escapeHtml(artistBio)}</textarea>
+                        <textarea id="modalBio" rows="8" placeholder="Введите текст описания...">${escapeHtml(artistBio)}</textarea>
                         <div class="modal-buttons">
                             <button id="saveBioBtn">Сохранить</button>
                             <button class="cancel" id="cancelModal">Отмена</button>
                         </div>
                     `;
+                    
                     modal.classList.add('active');
                     
                     document.getElementById('saveBioBtn').onclick = () => {
@@ -255,120 +840,472 @@
                         renderAll();
                         modal.classList.remove('active');
                     };
+                    
                     document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
                 }
 
-                // Редактирование контактов
-                function editContacts() {
+                // Модалка редактирования контактов
+                function openEditContactsModal() {
                     if (!isAdmin) return;
+                    
                     const modal = document.getElementById('editModal');
                     const content = document.getElementById('editModalContent');
+                    
                     content.innerHTML = `
                         <h3>Редактировать контакты</h3>
-                        <input id="modalTg" value="${escapeHtml(contacts.tg)}">
-                        <input id="modalWa" value="${escapeHtml(contacts.wa)}">
-                        <input id="modalVk" value="${escapeHtml(contacts.vk)}">
-                        <input id="modalTgk" value="${escapeHtml(contacts.tgk)}">
+                        <input id="modalTg" value="${escapeHtml(contacts.tg)}" placeholder="Telegram: @username">
+                        <input id="modalWa" value="${escapeHtml(contacts.wa)}" placeholder="WhatsApp: +7 999 123-45-67">
+                        <input id="modalVk" value="${escapeHtml(contacts.vk)}" placeholder="VK: vk.com/username">
+                        <input id="modalTgk" value="${escapeHtml(contacts.tgk)}" placeholder="Telegram канал: t.me/channel">
                         <div class="modal-buttons">
                             <button id="saveContactsBtn">Сохранить</button>
                             <button class="cancel" id="cancelModal">Отмена</button>
                         </div>
                     `;
+                    
                     modal.classList.add('active');
                     
                     document.getElementById('saveContactsBtn').onclick = () => {
                         contacts = {
-                            tg: document.getElementById('modalTg').value,
-                            wa: document.getElementById('modalWa').value,
-                            vk: document.getElementById('modalVk').value,
-                            tgk: document.getElementById('modalTgk').value
+                            tg: document.getElementById('modalTg').value || '@bibl_art',
+                            wa: document.getElementById('modalWa').value || '+7 999 123-45-67',
+                            vk: document.getElementById('modalVk').value || 'vk.com/bibl.art',
+                            tgk: document.getElementById('modalTgk').value || 't.me/bibl_channel'
                         };
                         saveData();
                         renderAll();
                         modal.classList.remove('active');
                     };
+                    
                     document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
                 }
 
-                // Добавление работ
+                // Добавление работы в выставку
                 document.getElementById('addExhibitionBtn')?.addEventListener('click', () => {
                     if (!isAdmin) return;
-                    const title = prompt('Название:', 'Без названия') || 'Без названия';
-                    const desc = prompt('Описание:', '') || '';
-                    const img = prompt('ССЫЛКА на Imgur:', '');
-                    if (!img) return alert('Нужна ссылка!');
                     
-                    artworks.exhibition.push({
-                        id: Date.now(),
-                        title: title,
-                        description: desc,
-                        image_url: img
-                    });
-                    saveData();
-                    renderAll();
+                    const modal = document.getElementById('editModal');
+                    const content = document.getElementById('editModalContent');
+                    
+                    content.innerHTML = `
+                        <h3>Добавить работу</h3>
+                        <input id="modalTitle" placeholder="Название работы" value="Без названия">
+                        <input id="modalDesc" placeholder="Описание (необязательно)">
+                        <input id="modalImage" placeholder="Ссылка на фото (ImgPeek / Imgur)" required>
+                        <div class="modal-buttons">
+                            <button id="saveItemBtn">Добавить</button>
+                            <button class="cancel" id="cancelModal">Отмена</button>
+                        </div>
+                    `;
+                    
+                    modal.classList.add('active');
+                    
+                    document.getElementById('saveItemBtn').onclick = () => {
+                        const title = document.getElementById('modalTitle').value || 'Без названия';
+                        const desc = document.getElementById('modalDesc').value || '';
+                        const img = document.getElementById('modalImage').value;
+                        
+                        if (!img) {
+                            alert('Пожалуйста, введите ссылку на изображение');
+                            return;
+                        }
+                        
+                        if (!isValidImageUrl(img)) {
+                            if (!confirm('Ссылка может не быть изображением. Всё равно продолжить?')) {
+                                return;
+                            }
+                        }
+                        
+                        artworks.exhibition.push({
+                            id: Date.now() + Math.random(),
+                            title: title,
+                            description: desc,
+                            image_url: img
+                        });
+                        
+                        saveData();
+                        renderAll();
+                        modal.classList.remove('active');
+                    };
+                    
+                    document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
                 });
 
+                // Добавление товара в магазин
                 document.getElementById('addShopBtn')?.addEventListener('click', () => {
                     if (!isAdmin) return;
-                    const title = prompt('Название:', 'Без названия') || 'Без названия';
-                    const desc = prompt('Описание:', '') || '';
-                    const price = prompt('Цена:', 'цена по запросу') || 'цена по запросу';
-                    const img = prompt('ССЫЛКА на Imgur:', '');
-                    if (!img) return alert('Нужна ссылка!');
                     
-                    artworks.shop.push({
-                        id: Date.now(),
-                        title: title,
-                        description: desc,
-                        price: price,
-                        image_url: img
-                    });
-                    saveData();
-                    renderAll();
+                    const modal = document.getElementById('editModal');
+                    const content = document.getElementById('editModalContent');
+                    
+                    content.innerHTML = `
+                        <h3>Добавить товар</h3>
+                        <input id="modalTitle" placeholder="Название товара" value="Без названия">
+                        <input id="modalDesc" placeholder="Описание (необязательно)">
+                        <input id="modalPrice" placeholder="Цена" value="цена по запросу">
+                        <input id="modalImage" placeholder="Ссылка на фото (ImgPeek / Imgur)" required>
+                        <div class="modal-buttons">
+                            <button id="saveItemBtn">Добавить</button>
+                            <button class="cancel" id="cancelModal">Отмена</button>
+                        </div>
+                    `;
+                    
+                    modal.classList.add('active');
+                    
+                    document.getElementById('saveItemBtn').onclick = () => {
+                        const title = document.getElementById('modalTitle').value || 'Без названия';
+                        const desc = document.getElementById('modalDesc').value || '';
+                        const price = document.getElementById('modalPrice').value || 'цена по запросу';
+                        const img = document.getElementById('modalImage').value;
+                        
+                        if (!img) {
+                            alert('Пожалуйста, введите ссылку на изображение');
+                            return;
+                        }
+                        
+                        if (!isValidImageUrl(img)) {
+                            if (!confirm('Ссылка может не быть изображением. Всё равно продолжить?')) {
+                                return;
+                            }
+                        }
+                        
+                        artworks.shop.push({
+                            id: Date.now() + Math.random(),
+                            title: title,
+                            description: desc,
+                            price: price,
+                            image_url: img
+                        });
+                        
+                        saveData();
+                        renderAll();
+                        modal.classList.remove('active');
+                    };
+                    
+                    document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
                 });
 
                 // Авторизация
-                document.getElementById('loginBtn').onclick = () => {
-                    document.getElementById('loginModal').classList.add('active');
-                };
-                document.getElementById('cancelLogin').onclick = () => {
+                document.getElementById('cancelLogin')?.addEventListener('click', () => {
                     document.getElementById('loginModal').classList.remove('active');
-                };
-                document.getElementById('submitPassword').onclick = () => {
-                    if (document.getElementById('passwordInput').value === ADMIN_PASSWORD) {
+                });
+                
+                document.getElementById('submitPassword')?.addEventListener('click', () => {
+                    const password = document.getElementById('passwordInput').value;
+                    if (password === ADMIN_PASSWORD) {
                         isAdmin = true;
                         document.body.classList.add('admin-mode');
+                        sessionStorage.setItem('bibl_admin', 'true');
                         document.getElementById('loginModal').classList.remove('active');
                         renderAll();
+                        
+                        // Убираем параметр из URL
+                        const url = new URL(window.location);
+                        url.searchParams.delete('bibl_edit');
+                        window.history.replaceState({}, '', url);
                     } else {
                         alert('Неверный пароль');
                     }
-                };
-                document.getElementById('logoutBtn').onclick = () => {
-                    isAdmin = false;
-                    document.body.classList.remove('admin-mode');
-                    renderAll();
-                };
-
-                // Навигация
-                document.querySelectorAll('.nav-btn').forEach(btn => {
-                    btn.onclick = () => {
-                        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                        document.getElementById(btn.dataset.page + 'Page').classList.add('active');
-                    };
                 });
 
-                // Закрытие модалок
-                window.onclick = (e) => {
-                    ['loginModal', 'editModal', 'zoomModal'].forEach(id => {
-                        const modal = document.getElementById(id);
-                        if (modal && e.target === modal) modal.classList.remove('active');
+                // Навигация между страницами
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                        document.getElementById(this.dataset.page + 'Page').classList.add('active');
                     });
-                };
+                });
 
-                // Запуск
+                // Закрытие модалок по клику на фон
+                window.addEventListener('click', (e) => {
+                    const loginModal = document.getElementById('loginModal');
+                    const editModal = document.getElementById('editModal');
+                    const zoomModal = document.getElementById('zoomModal');
+                    
+                    if (loginModal && e.target === loginModal) {
+                        loginModal.classList.remove('active');
+                    }
+                    if (editModal && e.target === editModal) {
+                        editModal.classList.remove('active');
+                    }
+                    if (zoomModal && e.target === zoomModal) {
+                        zoomModal.classList.remove('active');
+                    }
+                });
+
+                // ========== ТЕТРИС ==========
+                const canvas = document.getElementById('tetrisCanvas');
+                const ctx = canvas?.getContext('2d');
+                const scoreElement = document.getElementById('gameScore');
+                
+                if (canvas && ctx && scoreElement) {
+                    const COLS = 10;
+                    const ROWS = 20;
+                    const BLOCK_SIZE = canvas.width / COLS;
+
+                    let grid = [];
+                    let score = 0;
+                    let gameActive = false;
+                    let gamePaused = false;
+                    let gameInterval;
+                    
+                    const pieces = [
+                        { shape: [[1,1,1,1]], color: '#faf9f7' }, // I
+                        { shape: [[1,1],[1,1]], color: '#faf9f7' }, // O
+                        { shape: [[0,1,0],[1,1,1]], color: '#faf9f7' }, // T
+                        { shape: [[0,1,1],[1,1,0]], color: '#faf9f7' }, // S
+                        { shape: [[1,1,0],[0,1,1]], color: '#faf9f7' }, // Z
+                        { shape: [[1,0,0],[1,1,1]], color: '#faf9f7' }, // J
+                        { shape: [[0,0,1],[1,1,1]], color: '#faf9f7' } // L
+                    ];
+
+                    let currentPiece = null;
+                    let currentX = 0, currentY = 0;
+
+                    function initGrid() {
+                        grid = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+                    }
+
+                    function spawnPiece() {
+                        const piece = pieces[Math.floor(Math.random() * pieces.length)];
+                        currentPiece = {
+                            shape: piece.shape.map(row => [...row]),
+                            color: piece.color
+                        };
+                        currentX = Math.floor((COLS - piece.shape[0].length) / 2);
+                        currentY = 0;
+                        
+                        if (collision()) {
+                            gameOver();
+                        }
+                    }
+
+                    function collision() {
+                        if (!currentPiece) return true;
+                        for (let y = 0; y < currentPiece.shape.length; y++) {
+                            for (let x = 0; x < currentPiece.shape[0].length; x++) {
+                                if (currentPiece.shape[y][x]) {
+                                    const boardX = currentX + x;
+                                    const boardY = currentY + y;
+                                    if (boardX < 0 || boardX >= COLS || boardY >= ROWS || (boardY >= 0 && grid[boardY] && grid[boardY][boardX])) {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                        return false;
+                    }
+
+                    function mergePiece() {
+                        if (!currentPiece) return;
+                        for (let y = 0; y < currentPiece.shape.length; y++) {
+                            for (let x = 0; x < currentPiece.shape[0].length; x++) {
+                                if (currentPiece.shape[y][x]) {
+                                    const boardY = currentY + y;
+                                    const boardX = currentX + x;
+                                    if (boardY >= 0 && grid[boardY]) {
+                                        grid[boardY][boardX] = 1;
+                                    }
+                                }
+                            }
+                        }
+                        checkLines();
+                        spawnPiece();
+                    }
+
+                    function checkLines() {
+                        let linesCleared = 0;
+                        for (let y = ROWS - 1; y >= 0; y--) {
+                            if (grid[y] && grid[y].every(cell => cell === 1)) {
+                                grid.splice(y, 1);
+                                grid.unshift(Array(COLS).fill(0));
+                                y++;
+                                linesCleared++;
+                            }
+                        }
+                        if (linesCleared > 0) {
+                            score += linesCleared * 100;
+                            scoreElement.textContent = score;
+                        }
+                    }
+
+                    function movePiece(dx, dy) {
+                        if (!gameActive || gamePaused || !currentPiece) return false;
+                        currentX += dx;
+                        currentY += dy;
+                        if (collision()) {
+                            currentX -= dx;
+                            currentY -= dy;
+                            if (dy === 1) {
+                                mergePiece();
+                            }
+                            return false;
+                        }
+                        return true;
+                    }
+
+                    function rotatePiece() {
+                        if (!gameActive || gamePaused || !currentPiece) return;
+                        
+                        const rotated = currentPiece.shape[0].map((_, i) => 
+                            currentPiece.shape.map(row => row[i]).reverse()
+                        );
+                        
+                        const originalShape = currentPiece.shape.map(row => [...row]);
+                        currentPiece.shape = rotated;
+                        
+                        if (collision()) {
+                            currentPiece.shape = originalShape;
+                        }
+                    }
+
+                    function gameOver() {
+                        gameActive = false;
+                        if (gameInterval) {
+                            clearInterval(gameInterval);
+                            gameInterval = null;
+                        }
+                    }
+
+                    function draw() {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.strokeStyle = '#faf9f7';
+                        ctx.lineWidth = 1;
+                        
+                        for (let y = 0; y < ROWS; y++) {
+                            for (let x = 0; x < COLS; x++) {
+                                if (grid[y] && grid[y][x]) {
+                                    ctx.fillStyle = '#faf9f7';
+                                    ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
+                                } else {
+                                    ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
+                                }
+                            }
+                        }
+                        
+                        if (currentPiece && gameActive) {
+                            ctx.fillStyle = '#faf9f7';
+                            for (let y = 0; y < currentPiece.shape.length; y++) {
+                                for (let x = 0; x < currentPiece.shape[0].length; x++) {
+                                    if (currentPiece.shape[y][x]) {
+                                        ctx.fillRect(
+                                            (currentX + x) * BLOCK_SIZE,
+                                            (currentY + y) * BLOCK_SIZE,
+                                            BLOCK_SIZE-1,
+                                            BLOCK_SIZE-1
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (gamePaused && gameActive) {
+                            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            ctx.fillStyle = '#faf9f7';
+                            ctx.font = '20px Georgia';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('ПАУЗА', canvas.width/2, canvas.height/2);
+                        }
+                        
+                        if (!gameActive) {
+                            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            ctx.fillStyle = '#faf9f7';
+                            ctx.font = '20px Georgia';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('ИГРА ОКОНЧЕНА', canvas.width/2, canvas.height/2);
+                        }
+                    }
+
+                    function gameLoop() {
+                        if (gameActive && !gamePaused) {
+                            movePiece(0, 1);
+                        }
+                        draw();
+                    }
+
+                    function startNewGame() {
+                        if (gameInterval) {
+                            clearInterval(gameInterval);
+                        }
+                        initGrid();
+                        score = 0;
+                        scoreElement.textContent = '0';
+                        gameActive = true;
+                        gamePaused = false;
+                        spawnPiece();
+                        gameInterval = setInterval(gameLoop, 300);
+                    }
+
+                    document.addEventListener('keydown', (e) => {
+                        const activePage = document.querySelector('.page.active')?.id;
+                        if (activePage !== 'gamePage' || !gameActive) return;
+                        
+                        switch(e.key) {
+                            case 'ArrowLeft':
+                                e.preventDefault();
+                                movePiece(-1, 0);
+                                draw();
+                                break;
+                            case 'ArrowRight':
+                                e.preventDefault();
+                                movePiece(1, 0);
+                                draw();
+                                break;
+                            case 'ArrowDown':
+                                e.preventDefault();
+                                movePiece(0, 1);
+                                draw();
+                                break;
+                            case 'ArrowUp':
+                                e.preventDefault();
+                                rotatePiece();
+                                draw();
+                                break;
+                        }
+                    });
+
+                    document.getElementById('moveLeftBtn')?.addEventListener('click', () => {
+                        if (document.querySelector('.page.active')?.id === 'gamePage' && gameActive && !gamePaused) {
+                            movePiece(-1, 0);
+                            draw();
+                        }
+                    });
+                    
+                    document.getElementById('moveRightBtn')?.addEventListener('click', () => {
+                        if (document.querySelector('.page.active')?.id === 'gamePage' && gameActive && !gamePaused) {
+                            movePiece(1, 0);
+                            draw();
+                        }
+                    });
+                    
+                    document.getElementById('moveDownBtn')?.addEventListener('click', () => {
+                        if (document.querySelector('.page.active')?.id === 'gamePage' && gameActive && !gamePaused) {
+                            movePiece(0, 1);
+                            draw();
+                        }
+                    });
+                    
+                    document.getElementById('rotateBtn')?.addEventListener('click', () => {
+                        if (document.querySelector('.page.active')?.id === 'gamePage' && gameActive && !gamePaused) {
+                            rotatePiece();
+                            draw();
+                        }
+                    });
+
+                    document.getElementById('newGameBtn')?.addEventListener('click', startNewGame);
+                    
+                    document.getElementById('pauseGameBtn')?.addEventListener('click', () => {
+                        if (!gameActive) return;
+                        gamePaused = !gamePaused;
+                        draw();
+                    });
+                }
+
+                // Инициализация
                 loadData();
             });
         })();

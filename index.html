@@ -829,42 +829,85 @@ if (urlParams.has('bibl_edit') && loginModal) {
                 `;
                 modal.classList.add('active');
                 
-                document.getElementById('saveBioBtn').addEventListener('click', () => {
-                    const newBio = document.getElementById('modalBio').value;
-                    saveBio(newBio);
-                    modal.classList.remove('active');
-                });
-                
-                document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('active'));
-            }
+                const saveBioBtn = document.getElementById('saveBioBtn');
+if (saveBioBtn) {
+    saveBioBtn.addEventListener('click', () => {
+        const modalBio = document.getElementById('modalBio');
+        if (modalBio) {
+            const newBio = modalBio.value;
+            saveBio(newBio);
+        }
+        const modal = document.getElementById('editModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    });
+}
 
-            function openEditContactsModal() {
-                const c = contacts;
-                const modal = document.getElementById('editModal');
-                const content = document.getElementById('editModalContent');
-                content.innerHTML = `
-                    <h3>Редактировать контакты</h3>
-                    <input id="modalTg" placeholder="Telegram (например @bibl)" value="${escapeHtml(c.tg || '')}">
-                    <input id="modalWa" placeholder="WhatsApp (+7...)" value="${escapeHtml(c.wa || '')}">
-                    <input id="modalVk" placeholder="VK (vk.com/...)" value="${escapeHtml(c.vk || '')}">
-                    <input id="modalTgk" placeholder="Канал Telegram (t.me/...)" value="${escapeHtml(c.tgk || '')}">
-                    <div class="modal-buttons">
-                        <button id="saveContactsBtn">Сохранить</button>
-                        <button class="cancel" id="cancelModal">Отмена</button>
-                    </div>
-                `;
-                modal.classList.add('active');
-                
-                document.getElementById('saveContactsBtn').addEventListener('click', () => {
-                    const newContacts = {
-                        tg: document.getElementById('modalTg').value,
-                        wa: document.getElementById('modalWa').value,
-                        vk: document.getElementById('modalVk').value,
-                        tgk: document.getElementById('modalTgk').value
-                    };
-                    saveContacts(newContacts);
-                    modal.classList.remove('active');
-                });
+const cancelModalBio = document.getElementById('cancelModal');
+if (cancelModalBio) {
+    cancelModalBio.addEventListener('click', () => {
+        const modal = document.getElementById('editModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    });
+}
+
+function openEditContactsModal() {
+    const c = contacts;
+    const modal = document.getElementById('editModal');
+    const content = document.getElementById('editModalContent');
+    
+    if (content) {
+        content.innerHTML = `
+            <h3>Редактировать контакты</h3>
+            <input id="modalTg" placeholder="Telegram (например @bibl)" value="${escapeHtml(c.tg || '')}">
+            <input id="modalWa" placeholder="WhatsApp (+7...)" value="${escapeHtml(c.wa || '')}">
+            <input id="modalVk" placeholder="VK (vk.com/...)" value="${escapeHtml(c.vk || '')}">
+            <input id="modalTgk" placeholder="Канал Telegram (t.me/...)" value="${escapeHtml(c.tgk || '')}">
+            <div class="modal-buttons">
+                <button id="saveContactsBtn">Сохранить</button>
+                <button class="cancel" id="cancelModal">Отмена</button>
+            </div>
+        `;
+    }
+    
+    if (modal) {
+        modal.classList.add('active');
+    }
+    
+    const saveContactsBtn = document.getElementById('saveContactsBtn');
+    if (saveContactsBtn) {
+        saveContactsBtn.addEventListener('click', () => {
+            const modalTg = document.getElementById('modalTg');
+            const modalWa = document.getElementById('modalWa');
+            const modalVk = document.getElementById('modalVk');
+            const modalTgk = document.getElementById('modalTgk');
+            
+            const newContacts = {
+                tg: modalTg ? modalTg.value : '',
+                wa: modalWa ? modalWa.value : '',
+                vk: modalVk ? modalVk.value : '',
+                tgk: modalTgk ? modalTgk.value : ''
+            };
+            saveContacts(newContacts);
+            
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        });
+    }
+    
+    const cancelModal = document.getElementById('cancelModal');
+    if (cancelModal) {
+        cancelModal.addEventListener('click', () => {
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        });
+    }
+}
                 
                 document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('active'));
             }

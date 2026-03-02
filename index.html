@@ -568,10 +568,11 @@
             let artistBio = "";
             let contacts = { tg: '', wa: '', vk: '', tgk: '' };
 
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('bibl_edit')) {
-                document.getElementById('loginModal').classList.add('active');
-            }
+         const urlParams = new URLSearchParams(window.location.search);
+const loginModal = document.getElementById('loginModal');
+if (urlParams.has('bibl_edit') && loginModal) {
+    loginModal.classList.add('active');
+}
 
             // ================== ЗАГРУЗКА ВСЕХ ДАННЫХ ==================
             async function loadAllData() {

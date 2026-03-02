@@ -749,41 +749,42 @@
                 document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('active'));
             }
 
-            document.getElementById('addExhibitionBtn').addEventListener('click', () => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
-                input.onchange = async () => {
-                    const title = prompt('Название работы:') || 'Без названия';
-                    const description = prompt('Описание:') || '';
-                    const formData = new FormData();
-                    formData.append('title', title);
-                    formData.append('description', description);
-                    formData.append('section', 'exhibition');
-                    formData.append('image', input.files[0]);
-                    await addArtwork(formData);
-                };
-                input.click();
-            });
-
-            document.getElementById('addShopBtn').addEventListener('click', () => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
-                input.onchange = async () => {
-                    const title = prompt('Название товара:') || 'Без названия';
-                    const description = prompt('Описание:') || '';
-                    const price = prompt('Цена:') || 'цена по запросу';
-                    const formData = new FormData();
-                    formData.append('title', title);
-                    formData.append('description', description);
-                    formData.append('price', price);
-                    formData.append('section', 'shop');
-                    formData.append('image', input.files[0]);
-                    await addArtwork(formData);
-                };
-                input.click();
-            });
+    document.getElementById('addExhibitionBtn').addEventListener('click', () => {
+  const title = prompt('Название работы:') || 'Без названия';
+  const description = prompt('Описание:') || '';
+  const image_url = prompt('Ссылка на фото (с Imgur или другого хостинга):');
+  
+  if (!image_url) {
+    alert('Нужно указать ссылку на фото');
+    return;
+  }
+  
+  const formData = new FormData();
+  formData.append('title', title);
+  formData.append('description', description);
+  formData.append('section', 'exhibition');
+  formData.append('image_url', image_url);
+  
+  addArtwork(formData);
+});
+        document.getElementById('addExhibitionBtn').addEventListener('click', () => {
+  const title = prompt('Название работы:') || 'Без названия';
+  const description = prompt('Описание:') || '';
+  const image_url = prompt('Ссылка на фото (с Imgur или другого хостинга):');
+  
+  if (!image_url) {
+    alert('Нужно указать ссылку на фото');
+    return;
+  }
+  
+  const formData = new FormData();
+  formData.append('title', title);
+  formData.append('description', description);
+  formData.append('section', 'exhibition');
+  formData.append('image_url', image_url);
+  
+  addArtwork(formData);
+});
 
             document.getElementById('loginBtn').onclick = () => {
                 document.getElementById('loginModal').classList.add('active');

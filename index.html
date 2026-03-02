@@ -1,648 +1,1219 @@
-<script>
-    (function() {
-        const WORKER_URL = 'https://bibl-api-final-2.stef-ruprecht.workers.dev';
-        const ADMIN_PASSWORD = 'BiblVeta098123';
-        const IMGUR_CLIENT_ID = 'ваш_imgur_client_id'; // ⚠️ ВСТАВЬТЕ СВОЙ CLIENT_ID
-
-        let isAdmin = false;
-        let currentPage = 'about';
-        let artworks = { exhibition: [], shop: [] };
-        let artistBio = "";
-        let contacts = { tg: '', wa: '', vk: '', tgk: '' };
-
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('bibl_edit')) {
-            document.getElementById('loginModal').classList.add('active');
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>библ • художественная выставка</title>
+    <style>
+        /* ==== ВСЕ ТВОИ СТИЛИ БЕЗ ИЗМЕНЕНИЙ ==== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        // ================== ЗАГРУЗКА ВСЕХ ДАННЫХ ==================
-        async function loadAllData() {
-            try {
-                // Загружаем работы
-                const artworksRes = await fetch(`${WORKER_URL}/api/artworks`);
-                const artworksData = await artworksRes.json();
-                artworks.exhibition = artworksData.filter(item => item.section === 'exhibition');
-                artworks.shop = artworksData.filter(item => item.section === 'shop');
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background-color: #faf9f7;
+            color: #1e1e1e;
+            line-height: 1.6;
+            font-size: 16px;
+        }
 
-                // Загружаем био
-                const bioRes = await fetch(`${WORKER_URL}/api/bio`);
-                if (bioRes.ok) {
-                    const bioData = await bioRes.json();
-                    artistBio = bioData.text || "Художница из Петербурга. Работаю с маслом, акрилом, текстилем. Участница групповых выставок. Исследую фактуры и городскую тишину.";
-                }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 5%;
+        }
 
-                // Загружаем контакты
-                const contactsRes = await fetch(`${WORKER_URL}/api/contacts`);
-                if (contactsRes.ok) {
-                    contacts = await contactsRes.json();
-                } else {
+        header {
+            border-bottom: 1px solid #d0d0d0;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            font-size: clamp(1.8rem, 6vw, 2.8rem);
+            font-weight: 300;
+            letter-spacing: 4px;
+            text-transform: lowercase;
+            border: 1px solid #333;
+            padding: 5px 15px;
+            display: inline-block;
+            line-height: 1.2;
+            cursor: pointer;
+        }
+
+        nav {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            font-family: 'Georgia', serif;
+            color: #3a3a3a;
+            cursor: pointer;
+            padding: 5px 0;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        nav button.active {
+            border-bottom: 2px solid #1e1e1e;
+            font-weight: bold;
+        }
+
+        .auth-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .auth-area button {
+            background: none;
+            border: 1px solid #aaa;
+            padding: 8px 16px;
+            font-family: 'Georgia', serif;
+            cursor: pointer;
+            background-color: white;
+            transition: 0.1s;
+        }
+
+        .auth-area button:hover {
+            background-color: #1e1e1e;
+            color: white;
+            border-color: #1e1e1e;
+        }
+
+        #loginBtn {
+            display: none;
+        }
+
+        .page { display: none; min-height: 50vh; }
+        .page.active { display: block; }
+
+        h1 {
+            font-weight: 300;
+            font-size: clamp(2rem, 5vw, 2.8rem);
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            border-left: 3px solid #1e1e1e;
+            padding-left: 20px;
+        }
+
+        .art-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 30px 25px;
+            margin-top: 30px;
+        }
+
+        .art-card {
+            background-color: white;
+            border: 1px solid #eaeaea;
+            padding: 20px 15px 20px 15px;
+            transition: transform 0.2s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .art-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+
+        .art-image-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1.1;
+            margin-bottom: 15px;
+            cursor: pointer;
+            overflow: hidden;
+            background: #f0f0f0;
+        }
+
+        .art-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.3s;
+        }
+
+        .art-image-container:hover .art-image { transform: scale(1.05); }
+
+        .zoom-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.9);
+            border: 1px solid #1e1e1e;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+
+        .art-image-container:hover .zoom-icon { opacity: 1; }
+
+        .art-title {
+            font-size: 1.4rem;
+            font-weight: 400;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+        }
+
+        .art-description {
+            color: #5a5a5a;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+
+        .art-price {
+            font-size: 1.3rem;
+            font-weight: 300;
+            color: #2b5e2b;
+            margin-top: auto;
+            border-top: 1px dashed #ccc;
+            padding-top: 12px;
+        }
+
+        .contact-block {
+            margin-top: 40px;
+            padding: 20px;
+            background: #f3f2f0;
+            border: 1px solid #d4d4d4;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+            position: relative;
+        }
+
+        .contact-block a {
+            color: #1e1e1e;
+            text-decoration: none;
+            border-bottom: 1px dotted #777;
+        }
+
+        .edit-btn, .add-btn, .edit-contacts-btn {
+            background: white;
+            border: 1px solid #1e1e1e;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .admin-mode .edit-btn,
+        .admin-mode .add-btn,
+        .admin-mode .edit-contacts-btn {
+            display: flex;
+        }
+
+        .edit-btn:hover, .add-btn:hover, .edit-contacts-btn:hover {
+            background: #1e1e1e;
+            color: white;
+        }
+
+        .add-btn {
+            border-radius: 40px;
+            width: auto;
+            padding: 0 20px;
+            gap: 5px;
+            margin: 20px 0 30px;
+        }
+
+        .edit-contacts-btn {
+            position: absolute;
+            top: -18px;
+            right: 20px;
+            background: #1e1e1e;
+            color: white;
+            border: none;
+            width: auto;
+            border-radius: 30px;
+            padding: 8px 20px;
+            font-size: 0.9rem;
+            gap: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 15px;
+        }
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: white;
+            padding: 35px 30px;
+            max-width: 550px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        }
+
+        .modal-content h3 {
+            font-weight: 300;
+            font-size: 2rem;
+            margin-bottom: 25px;
+        }
+
+        .modal-content input,
+        .modal-content textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #bbb;
+            font-family: 'Georgia', serif;
+            font-size: 1rem;
+        }
+
+        .modal-content input[type="file"] {
+            padding: 8px;
+            background: #f5f5f5;
+            border: 1px dashed #999;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .modal-content button {
+            padding: 12px 30px;
+            background: #1e1e1e;
+            color: white;
+            border: none;
+            font-family: 'Georgia', serif;
+            cursor: pointer;
+            flex: 1 1 auto;
+        }
+
+        .modal-content button.cancel {
+            background: #8f8f8f;
+        }
+
+        .delete-btn {
+            background: #b15a5a !important;
+        }
+
+        .zoom-modal .modal-content {
+            max-width: 800px;
+            background: transparent;
+            box-shadow: none;
+            padding: 0;
+        }
+
+        .zoom-content {
+            background: white;
+            padding: 20px;
+        }
+
+        .zoom-image {
+            width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+        }
+
+        .zoom-details {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .artist-bio {
+            font-size: 1.2rem;
+            white-space: pre-line;
+            max-width: 800px;
+            margin: 0 auto 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.7);
+            position: relative;
+            border: 1px solid transparent;
+            padding-right: 50px;
+        }
+        
+        .admin-mode .artist-bio { border: 1px dashed #aaa; }
+
+        .bio-edit-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            border: 1px solid #1e1e1e;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .admin-mode .bio-edit-btn {
+            display: flex;
+        }
+
+        .bio-edit-btn:hover {
+            background: #1e1e1e;
+            color: white;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #faf9f7;
+            border-radius: 4px;
+        }
+
+        canvas#tetrisCanvas {
+            border: 2px solid #faf9f7;
+            background: #000;
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            aspect-ratio: 1/2;
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .game-btn {
+            padding: 10px 20px;
+            background: #faf9f7;
+            color: #1e1e1e;
+            border: none;
+            font-family: 'Georgia', serif;
+            cursor: pointer;
+            border-radius: 2px;
+            min-width: 60px;
+            font-size: 1.2rem;
+        }
+
+        .game-btn:hover { background: #fff; }
+
+        .mobile-controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .mobile-controls .game-btn {
+            width: 70px;
+            height: 70px;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #333;
+            color: #faf9f7;
+            border: 1px solid #faf9f7;
+        }
+
+        .mobile-controls .game-btn:active {
+            background: #faf9f7;
+            color: #333;
+        }
+
+        .score {
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+        }
+
+        @media (max-width: 600px) {
+            header { flex-direction: column; align-items: flex-start; }
+            nav { width: 100%; justify-content: space-around; }
+            .art-grid { gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <header>
+            <div class="logo">библ</div>
+            <nav>
+                <button class="nav-btn active" data-page="about">О художнице</button>
+                <button class="nav-btn" data-page="exhibition">Выставка</button>
+                <button class="nav-btn" data-page="shop">Магазин</button>
+                <button class="nav-btn" data-page="game">Игра</button>
+            </nav>
+            <div class="auth-area">
+                <span id="authStatus"></span>
+                <button id="loginBtn">Войти</button>
+                <button id="logoutBtn" style="display:none;">Выйти</button>
+            </div>
+        </header>
+
+        <div id="loginModal" class="modal">
+            <div class="modal-content">
+                <h3>доступ</h3>
+                <input type="password" id="passwordInput" placeholder="пароль">
+                <div class="modal-buttons">
+                    <button id="submitPassword">Войти</button>
+                    <button class="cancel" id="cancelLogin">Отмена</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="editModal" class="modal">
+            <div class="modal-content" id="editModalContent"></div>
+        </div>
+
+        <div id="zoomModal" class="modal zoom-modal">
+            <div class="modal-content zoom-content">
+                <img id="zoomImage" class="zoom-image" src="" alt="Увеличенное изображение">
+                <div class="zoom-details">
+                    <h3 id="zoomTitle"></h3>
+                    <p id="zoomDescription"></p>
+                    <button class="cancel" onclick="document.getElementById('zoomModal').classList.remove('active')">Закрыть</button>
+                </div>
+            </div>
+        </div>
+
+        <section id="aboutPage" class="page active">
+            <h1>библ</h1>
+            <div class="artist-bio" id="artistBioDisplay">
+                Художница из Петербурга. Работаю с маслом, акрилом, текстилем. Участница групповых выставок. Исследую фактуры и городскую тишину.
+                <button class="bio-edit-btn" id="editBioBtn">✎</button>
+            </div>
+        </section>
+
+        <section id="exhibitionPage" class="page">
+            <h1>выставка</h1>
+            <div class="admin-actions">
+                <button class="add-btn" id="addExhibitionBtn">➕ Добавить работу</button>
+            </div>
+            <div class="art-grid" id="exhibitionGrid"></div>
+        </section>
+
+        <section id="shopPage" class="page">
+            <h1>магазин</h1>
+            <div class="admin-actions">
+                <button class="add-btn" id="addShopBtn">➕ Добавить товар</button>
+            </div>
+            <div class="art-grid" id="shopGrid"></div>
+            <div class="contact-block" id="contactsBlock">
+                <button class="edit-contacts-btn" id="editContactsBtn">✎ ред. контакты</button>
+            </div>
+        </section>
+
+        <section id="gamePage" class="page">
+            <h1>тетрис / пауза</h1>
+            <div class="game-container">
+                <canvas id="tetrisCanvas" width="300" height="600"></canvas>
+                <div class="score" id="gameScore">0</div>
+                <div class="game-controls">
+                    <button class="game-btn" id="newGameBtn">Новая</button>
+                    <button class="game-btn" id="pauseGameBtn">Пауза</button>
+                </div>
+                <div class="mobile-controls">
+                    <button class="game-btn" id="moveLeftBtn">←</button>
+                    <button class="game-btn" id="rotateBtn">↻</button>
+                    <button class="game-btn" id="moveRightBtn">→</button>
+                    <button class="game-btn" id="moveDownBtn">↓</button>
+                </div>
+                <p style="color: #aaa;">← → движение, ↑ поворот, ↓ ускорение</p>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        (function() {
+            const WORKER_URL = 'https://bibl-api-final-2.stef-ruprecht.workers.dev';
+            const ADMIN_PASSWORD = 'BiblVeta098123';
+            const IMGUR_CLIENT_ID = ''; // ⚠️ СЮДА ВСТАВЬ СВОЙ CLIENT-ID В КАВЫЧКАХ, НАПРИМЕР '123456789abc'
+
+            let isAdmin = false;
+            let currentPage = 'about';
+            let artworks = { exhibition: [], shop: [] };
+            let artistBio = "";
+            let contacts = { tg: '', wa: '', vk: '', tgk: '' };
+
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('bibl_edit')) {
+                document.getElementById('loginModal').classList.add('active');
+            }
+
+            // ================== ЗАГРУЗКА ВСЕХ ДАННЫХ ==================
+            async function loadAllData() {
+                try {
+                    // Загружаем работы
+                    const artworksRes = await fetch(`${WORKER_URL}/api/artworks`);
+                    const artworksData = await artworksRes.json();
+                    artworks.exhibition = artworksData.filter(item => item.section === 'exhibition');
+                    artworks.shop = artworksData.filter(item => item.section === 'shop');
+
+                    // Загружаем био
+                    const bioRes = await fetch(`${WORKER_URL}/api/bio`);
+                    if (bioRes.ok) {
+                        const bioData = await bioRes.json();
+                        artistBio = bioData.text || "Художница из Петербурга. Работаю с маслом, акрилом, текстилем. Участница групповых выставок. Исследую фактуры и городскую тишину.";
+                    }
+
+                    // Загружаем контакты
+                    const contactsRes = await fetch(`${WORKER_URL}/api/contacts`);
+                    if (contactsRes.ok) {
+                        contacts = await contactsRes.json();
+                    } else {
+                        contacts = { tg: '@bibl_art', wa: '+7 999 123-45-67', vk: 'vk.com/bibl.art', tgk: 't.me/bibl_channel' };
+                    }
+                } catch (e) {
+                    console.error('Failed to load data:', e);
+                    // Устанавливаем значения по умолчанию при ошибке
+                    artistBio = "Художница из Петербурга. Работаю с маслом, акрилом, текстилем. Участница групповых выставок. Исследую фактуры и городскую тишину.";
                     contacts = { tg: '@bibl_art', wa: '+7 999 123-45-67', vk: 'vk.com/bibl.art', tgk: 't.me/bibl_channel' };
                 }
-            } catch (e) {
-                console.error('Failed to load data:', e);
-                // Устанавливаем значения по умолчанию при ошибке
-                artistBio = "Художница из Петербурга. Работаю с маслом, акрилом, текстилем. Участница групповых выставок. Исследую фактуры и городскую тишину.";
-                contacts = { tg: '@bibl_art', wa: '+7 999 123-45-67', vk: 'vk.com/bibl.art', tgk: 't.me/bibl_channel' };
+                renderAll();
             }
-            renderAll();
-        }
 
-        // ================== СОХРАНЕНИЕ БИО ==================
-        async function saveBio(newBio) {
-            if (!isAdmin) return;
-            try {
-                const res = await fetch(`${WORKER_URL}/api/bio`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: newBio })
-                });
-                if (res.ok) {
-                    artistBio = newBio;
-                    renderBio();
-                } else {
-                    alert('Ошибка при сохранении описания');
+            // ================== СОХРАНЕНИЕ БИО ==================
+            async function saveBio(newBio) {
+                if (!isAdmin) return;
+                try {
+                    const res = await fetch(`${WORKER_URL}/api/bio`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: newBio })
+                    });
+                    if (res.ok) {
+                        artistBio = newBio;
+                        renderBio();
+                    } else {
+                        alert('Ошибка при сохранении описания');
+                    }
+                } catch (e) {
+                    alert('Ошибка: ' + e.message);
                 }
-            } catch (e) {
-                alert('Ошибка: ' + e.message);
             }
-        }
 
-        // ================== СОХРАНЕНИЕ КОНТАКТОВ ==================
-        async function saveContacts(newContacts) {
-            if (!isAdmin) return;
-            try {
-                const res = await fetch(`${WORKER_URL}/api/contacts`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newContacts)
-                });
-                if (res.ok) {
-                    contacts = newContacts;
-                    renderContacts();
-                } else {
-                    alert('Ошибка при сохранении контактов');
+            // ================== СОХРАНЕНИЕ КОНТАКТОВ ==================
+            async function saveContacts(newContacts) {
+                if (!isAdmin) return;
+                try {
+                    const res = await fetch(`${WORKER_URL}/api/contacts`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newContacts)
+                    });
+                    if (res.ok) {
+                        contacts = newContacts;
+                        renderContacts();
+                    } else {
+                        alert('Ошибка при сохранении контактов');
+                    }
+                } catch (e) {
+                    alert('Ошибка: ' + e.message);
                 }
-            } catch (e) {
-                alert('Ошибка: ' + e.message);
             }
-        }
 
-        // ================== ЗАГРУЗКА НА IMGUR ==================
-        async function uploadToImgur(file) {
-            const formData = new FormData();
-            formData.append('image', file);
+            // ================== ЗАГРУЗКА НА IMGUR ==================
+            async function uploadToImgur(file) {
+                const formData = new FormData();
+                formData.append('image', file);
 
-            try {
-                const res = await fetch('https://api.imgur.com/3/image', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Client-ID ${IMGUR_CLIENT_ID}`
-                    },
-                    body: formData
+                try {
+                    const res = await fetch('https://api.imgur.com/3/image', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Client-ID ${IMGUR_CLIENT_ID}`
+                        },
+                        body: formData
+                    });
+                    
+                    const data = await res.json();
+                    if (data.success) {
+                        return data.data.link; // Возвращает прямую ссылку на изображение
+                    } else {
+                        throw new Error(data.data.error || 'Ошибка загрузки на Imgur');
+                    }
+                } catch (e) {
+                    throw new Error('Ошибка при загрузке на Imgur: ' + e.message);
+                }
+            }
+
+            // ================== ДОБАВЛЕНИЕ РАБОТЫ С ФАЙЛОМ ==================
+            async function addArtworkWithFile(formData, file) {
+                if (!isAdmin) return;
+                
+                try {
+                    // Сначала загружаем файл на Imgur
+                    const imgurLink = await uploadToImgur(file);
+                    
+                    // Добавляем ссылку в formData
+                    formData.append('image_url', imgurLink);
+                    
+                    // Отправляем на ваш сервер
+                    const res = await fetch(`${WORKER_URL}/api/artworks`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (res.ok) {
+                        loadAllData(); // Перезагружаем все данные
+                    } else {
+                        alert('Ошибка при добавлении');
+                    }
+                } catch (e) {
+                    alert('Ошибка: ' + e.message);
+                }
+            }
+
+            // ================== СТАРЫЕ ФУНКЦИИ (ОБНОВЛЁННЫЕ) ==================
+            async function addArtwork(formData) {
+                if (!isAdmin) return;
+                try {
+                    const res = await fetch(`${WORKER_URL}/api/artworks`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (res.ok) {
+                        loadAllData();
+                    } else {
+                        alert('Ошибка при добавлении');
+                    }
+                } catch (e) {
+                    alert('Ошибка: ' + e.message);
+                }
+            }
+
+            async function deleteArtwork(id) {
+                if (!isAdmin) return;
+                if (confirm('Удалить работу?')) {
+                    await fetch(`${WORKER_URL}/api/artworks/${id}`, {
+                        method: 'DELETE'
+                    });
+                    loadAllData();
+                }
+            }
+
+            function escapeHtml(unsafe) {
+                if (!unsafe) return unsafe;
+                return unsafe.replace(/[&<>"]/g, function(m) {
+                    if (m === '&') return '&amp;'; 
+                    if (m === '<') return '&lt;'; 
+                    if (m === '>') return '&gt;'; 
+                    if (m === '"') return '&quot;';
+                    return m;
+                });
+            }
+
+            function renderAll() {
+                renderBio();
+                renderExhibition();
+                renderShop();
+                renderContacts();
+            }
+
+            function renderBio() {
+                const bioDisplay = document.getElementById('artistBioDisplay');
+                if (bioDisplay) {
+                    bioDisplay.innerHTML = `${escapeHtml(artistBio)} <button class="bio-edit-btn" id="editBioBtn">✎</button>`;
+                    document.getElementById('editBioBtn')?.addEventListener('click', openEditBioModal);
+                }
+            }
+
+            function renderExhibition() {
+                const grid = document.getElementById('exhibitionGrid');
+                if (grid) {
+                    grid.innerHTML = artworks.exhibition.map(item => `
+                        <div class="art-card" data-id="${item.id}">
+                            <div class="art-image-container" onclick="openZoom('${item.image_url}', '${escapeHtml(item.title)}', '${escapeHtml(item.description)}')">
+                                <img class="art-image" src="${item.image_url}" alt="${escapeHtml(item.title)}">
+                                <div class="zoom-icon">🔍</div>
+                            </div>
+                            <div class="art-title">${escapeHtml(item.title)}</div>
+                            <div class="art-description">${escapeHtml(item.description) || '—'}</div>
+                            ${isAdmin ? `<button class="edit-btn" onclick="deleteArtwork(${item.id})">🗑️</button>` : ''}
+                        </div>
+                    `).join('');
+                }
+            }
+
+            function renderShop() {
+                const grid = document.getElementById('shopGrid');
+                if (grid) {
+                    grid.innerHTML = artworks.shop.map(item => `
+                        <div class="art-card" data-id="${item.id}">
+                            <div class="art-image-container" onclick="openZoom('${item.image_url}', '${escapeHtml(item.title)}', '${escapeHtml(item.description)}')">
+                                <img class="art-image" src="${item.image_url}" alt="${escapeHtml(item.title)}">
+                                <div class="zoom-icon">🔍</div>
+                            </div>
+                            <div class="art-title">${escapeHtml(item.title)}</div>
+                            <div class="art-description">${escapeHtml(item.description) || '—'}</div>
+                            <div class="art-price">${escapeHtml(item.price) || 'цена по запросу'}</div>
+                            ${isAdmin ? `<button class="edit-btn" onclick="deleteArtwork(${item.id})">🗑️</button>` : ''}
+                        </div>
+                    `).join('');
+                }
+            }
+
+            function renderContacts() {
+                const c = contacts;
+                const contactsBlock = document.getElementById('contactsBlock');
+                if (contactsBlock) {
+                    contactsBlock.innerHTML = `
+                        <a href="https://t.me/${c.tg ? c.tg.replace('@','') : ''}" target="_blank">📱 TG: ${c.tg || '@bibl_art'}</a>
+                        <a href="https://wa.me/${c.wa ? c.wa.replace(/[^0-9]/g, '') : ''}" target="_blank">📞 WhatsApp</a>
+                        <a href="https://${c.vk || 'vk.com/bibl.art'}" target="_blank">📘 VK: ${c.vk || 'vk.com/bibl.art'}</a>
+                        <a href="https://${c.tgk || 't.me/bibl_channel'}" target="_blank">📢 Канал: ${c.tgk || 't.me/bibl_channel'}</a>
+                        <button class="edit-contacts-btn" id="editContactsBtn">✎ ред. контакты</button>
+                    `;
+                    document.getElementById('editContactsBtn')?.addEventListener('click', openEditContactsModal);
+                }
+            }
+
+            window.openZoom = function(image, title, description) {
+                if (!image) {
+                    alert('Изображение отсутствует');
+                    return;
+                }
+                document.getElementById('zoomImage').src = image;
+                document.getElementById('zoomTitle').innerText = title;
+                document.getElementById('zoomDescription').innerText = description;
+                document.getElementById('zoomModal').classList.add('active');
+            };
+
+            window.deleteArtwork = deleteArtwork;
+
+            function openEditBioModal() {
+                if (!isAdmin) return;
+                const modal = document.getElementById('editModal');
+                const content = document.getElementById('editModalContent');
+                content.innerHTML = `
+                    <h3>Редактировать описание</h3>
+                    <textarea id="modalBio" rows="6">${escapeHtml(artistBio)}</textarea>
+                    <div class="modal-buttons">
+                        <button id="saveBioBtn">Сохранить</button>
+                        <button class="cancel" id="cancelModal">Отмена</button>
+                    </div>
+                `;
+                modal.classList.add('active');
+                
+                document.getElementById('saveBioBtn').addEventListener('click', () => {
+                    const newBio = document.getElementById('modalBio').value;
+                    saveBio(newBio);
+                    modal.classList.remove('active');
                 });
                 
-                const data = await res.json();
-                if (data.success) {
-                    return data.data.link; // Возвращает прямую ссылку на изображение
-                } else {
-                    throw new Error(data.data.error || 'Ошибка загрузки на Imgur');
-                }
-            } catch (e) {
-                throw new Error('Ошибка при загрузке на Imgur: ' + e.message);
+                document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('active'));
             }
-        }
 
-        // ================== ДОБАВЛЕНИЕ РАБОТЫ С ФАЙЛОМ ==================
-        async function addArtworkWithFile(formData, file) {
-            if (!isAdmin) return;
-            
-            try {
-                // Сначала загружаем файл на Imgur
-                const imgurLink = await uploadToImgur(file);
+            function openEditContactsModal() {
+                const c = contacts;
+                const modal = document.getElementById('editModal');
+                const content = document.getElementById('editModalContent');
+                content.innerHTML = `
+                    <h3>Редактировать контакты</h3>
+                    <input id="modalTg" placeholder="Telegram (например @bibl)" value="${escapeHtml(c.tg || '')}">
+                    <input id="modalWa" placeholder="WhatsApp (+7...)" value="${escapeHtml(c.wa || '')}">
+                    <input id="modalVk" placeholder="VK (vk.com/...)" value="${escapeHtml(c.vk || '')}">
+                    <input id="modalTgk" placeholder="Канал Telegram (t.me/...)" value="${escapeHtml(c.tgk || '')}">
+                    <div class="modal-buttons">
+                        <button id="saveContactsBtn">Сохранить</button>
+                        <button class="cancel" id="cancelModal">Отмена</button>
+                    </div>
+                `;
+                modal.classList.add('active');
                 
-                // Добавляем ссылку в formData
-                formData.append('image_url', imgurLink);
-                
-                // Отправляем на ваш сервер
-                const res = await fetch(`${WORKER_URL}/api/artworks`, {
-                    method: 'POST',
-                    body: formData
+                document.getElementById('saveContactsBtn').addEventListener('click', () => {
+                    const newContacts = {
+                        tg: document.getElementById('modalTg').value,
+                        wa: document.getElementById('modalWa').value,
+                        vk: document.getElementById('modalVk').value,
+                        tgk: document.getElementById('modalTgk').value
+                    };
+                    saveContacts(newContacts);
+                    modal.classList.remove('active');
                 });
                 
-                if (res.ok) {
-                    loadAllData(); // Перезагружаем все данные
-                } else {
-                    alert('Ошибка при добавлении');
-                }
-            } catch (e) {
-                alert('Ошибка: ' + e.message);
+                document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('active'));
             }
-        }
 
-        // ================== СТАРЫЕ ФУНКЦИИ (ОБНОВЛЁННЫЕ) ==================
-        async function addArtwork(formData) {
-            if (!isAdmin) return;
-            try {
-                const res = await fetch(`${WORKER_URL}/api/artworks`, {
-                    method: 'POST',
-                    body: formData
+            // ================== ОБНОВЛЁННЫЕ КНОПКИ ДОБАВЛЕНИЯ ==================
+            document.getElementById('addExhibitionBtn')?.addEventListener('click', () => {
+                if (!isAdmin) return;
+                
+                const modal = document.getElementById('editModal');
+                const content = document.getElementById('editModalContent');
+                content.innerHTML = `
+                    <h3>Добавить работу</h3>
+                    <input type="text" id="newTitle" placeholder="Название" value="Без названия">
+                    <textarea id="newDescription" placeholder="Описание" rows="3"></textarea>
+                    <input type="file" id="newImageFile" accept="image/*">
+                    <div class="modal-buttons">
+                        <button id="saveNewBtn">Загрузить</button>
+                        <button class="cancel" id="cancelModal">Отмена</button>
+                    </div>
+                `;
+                modal.classList.add('active');
+                
+                document.getElementById('saveNewBtn').addEventListener('click', async () => {
+                    const fileInput = document.getElementById('newImageFile');
+                    if (!fileInput.files || !fileInput.files[0]) {
+                        alert('Выберите файл изображения');
+                        return;
+                    }
+                    
+                    const formData = new FormData();
+                    formData.append('title', document.getElementById('newTitle').value || 'Без названия');
+                    formData.append('description', document.getElementById('newDescription').value || '');
+                    formData.append('section', 'exhibition');
+                    
+                    await addArtworkWithFile(formData, fileInput.files[0]);
+                    modal.classList.remove('active');
                 });
-                if (res.ok) {
+                
+                document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('active'));
+            });
+
+            document.getElementById('addShopBtn')?.addEventListener('click', () => {
+                if (!isAdmin) return;
+                
+                const modal = document.getElementById('editModal');
+                const content = document.getElementById('editModalContent');
+                content.innerHTML = `
+                    <h3>Добавить товар</h3>
+                    <input type="text" id="newTitle" placeholder="Название" value="Без названия">
+                    <textarea id="newDescription" placeholder="Описание" rows="3"></textarea>
+                    <input type="text" id="newPrice" placeholder="Цена" value="цена по запросу">
+                    <input type="file" id="newImageFile" accept="image/*">
+                    <div class="modal-buttons">
+                        <button id="saveNewBtn">Загрузить</button>
+                        <button class="cancel" id="cancelModal">Отмена</button>
+                    </div>
+                `;
+                modal.classList.add('active');
+                
+                document.getElementById('saveNewBtn').addEventListener('click', async () => {
+                    const fileInput = document.getElementById('newImageFile');
+                    if (!fileInput.files || !fileInput.files[0]) {
+                        alert('Выберите файл изображения');
+                        return;
+                    }
+                    
+                    const formData = new FormData();
+                    formData.append('title', document.getElementById('newTitle').value || 'Без названия');
+                    formData.append('description', document.getElementById('newDescription').value || '');
+                    formData.append('price', document.getElementById('newPrice').value || 'цена по запросу');
+                    formData.append('section', 'shop');
+                    
+                    await addArtworkWithFile(formData, fileInput.files[0]);
+                    modal.classList.remove('active');
+                });
+                
+                document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('active'));
+            });
+
+            // ================== АВТОРИЗАЦИЯ ==================
+            document.getElementById('loginBtn').onclick = () => {
+                document.getElementById('loginModal').classList.add('active');
+            };
+            document.getElementById('cancelLogin').onclick = () => {
+                document.getElementById('loginModal').classList.remove('active');
+            };
+            document.getElementById('submitPassword').onclick = () => {
+                if (document.getElementById('passwordInput').value === ADMIN_PASSWORD) {
+                    isAdmin = true;
+                    document.body.classList.add('admin-mode');
+                    document.getElementById('loginModal').classList.remove('active');
                     loadAllData();
                 } else {
-                    alert('Ошибка при добавлении');
+                    alert('Неверный пароль');
                 }
-            } catch (e) {
-                alert('Ошибка: ' + e.message);
-            }
-        }
+            };
+            document.getElementById('logoutBtn').onclick = () => {
+                isAdmin = false;
+                document.body.classList.remove('admin-mode');
+                renderAll();
+            };
 
-        async function deleteArtwork(id) {
-            if (!isAdmin) return;
-            if (confirm('Удалить работу?')) {
-                await fetch(`${WORKER_URL}/api/artworks/${id}`, {
-                    method: 'DELETE'
+            // ================== НАВИГАЦИЯ ==================
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                    const pageId = btn.dataset.page + 'Page';
+                    document.getElementById(pageId)?.classList.add('active');
                 });
-                loadAllData();
-            }
-        }
-
-        function escapeHtml(unsafe) {
-            if (!unsafe) return unsafe;
-            return unsafe.replace(/[&<>"]/g, function(m) {
-                if (m === '&') return '&amp;'; 
-                if (m === '<') return '&lt;'; 
-                if (m === '>') return '&gt;'; 
-                if (m === '"') return '&quot;';
-                return m;
             });
-        }
 
-        function renderAll() {
-            renderBio();
-            renderExhibition();
-            renderShop();
-            renderContacts();
-        }
-
-        function renderBio() {
-            document.getElementById('artistBioDisplay').innerHTML = 
-                `${escapeHtml(artistBio)} <button class="bio-edit-btn" id="editBioBtn">✎</button>`;
-            document.getElementById('editBioBtn').addEventListener('click', openEditBioModal);
-        }
-
-        function renderExhibition() {
-            const grid = document.getElementById('exhibitionGrid');
-            grid.innerHTML = artworks.exhibition.map(item => `
-                <div class="art-card" data-id="${item.id}">
-                    <div class="art-image-container" onclick="openZoom('${item.image_url}', '${escapeHtml(item.title)}', '${escapeHtml(item.description)}')">
-                        <img class="art-image" src="${item.image_url}" alt="${escapeHtml(item.title)}">
-                        <div class="zoom-icon">🔍</div>
-                    </div>
-                    <div class="art-title">${escapeHtml(item.title)}</div>
-                    <div class="art-description">${escapeHtml(item.description) || '—'}</div>
-                    ${isAdmin ? `<button class="edit-btn" onclick="deleteArtwork(${item.id})">🗑️</button>` : ''}
-                </div>
-            `).join('');
-        }
-
-        function renderShop() {
-            const grid = document.getElementById('shopGrid');
-            grid.innerHTML = artworks.shop.map(item => `
-                <div class="art-card" data-id="${item.id}">
-                    <div class="art-image-container" onclick="openZoom('${item.image_url}', '${escapeHtml(item.title)}', '${escapeHtml(item.description)}')">
-                        <img class="art-image" src="${item.image_url}" alt="${escapeHtml(item.title)}">
-                        <div class="zoom-icon">🔍</div>
-                    </div>
-                    <div class="art-title">${escapeHtml(item.title)}</div>
-                    <div class="art-description">${escapeHtml(item.description) || '—'}</div>
-                    <div class="art-price">${escapeHtml(item.price) || 'цена по запросу'}</div>
-                    ${isAdmin ? `<button class="edit-btn" onclick="deleteArtwork(${item.id})">🗑️</button>` : ''}
-                </div>
-            `).join('');
-        }
-
-        function renderContacts() {
-            const c = contacts;
-            document.getElementById('contactsBlock').innerHTML = `
-                <a href="https://t.me/${c.tg.replace('@','')}" target="_blank">📱 TG: ${c.tg}</a>
-                <a href="https://wa.me/${c.wa.replace(/[^0-9]/g, '')}" target="_blank">📞 WhatsApp</a>
-                <a href="https://${c.vk}" target="_blank">📘 VK: ${c.vk}</a>
-                <a href="https://${c.tgk}" target="_blank">📢 Канал: ${c.tgk}</a>
-                <button class="edit-contacts-btn" id="editContactsBtn">✎ ред. контакты</button>
-            `;
-            document.getElementById('editContactsBtn')?.addEventListener('click', openEditContactsModal);
-        }
-
-        window.openZoom = function(image, title, description) {
-            if (!image) {
-                alert('Изображение отсутствует');
-                return;
-            }
-            document.getElementById('zoomImage').src = image;
-            document.getElementById('zoomTitle').innerText = title;
-            document.getElementById('zoomDescription').innerText = description;
-            document.getElementById('zoomModal').classList.add('active');
-        };
-
-        window.deleteArtwork = deleteArtwork;
-
-        function openEditBioModal() {
-            if (!isAdmin) return;
-            const modal = document.getElementById('editModal');
-            const content = document.getElementById('editModalContent');
-            content.innerHTML = `
-                <h3>Редактировать описание</h3>
-                <textarea id="modalBio" rows="6">${escapeHtml(artistBio)}</textarea>
-                <div class="modal-buttons">
-                    <button id="saveBioBtn">Сохранить</button>
-                    <button class="cancel" id="cancelModal">Отмена</button>
-                </div>
-            `;
-            modal.classList.add('active');
-            
-            document.getElementById('saveBioBtn').addEventListener('click', () => {
-                const newBio = document.getElementById('modalBio').value;
-                saveBio(newBio); // ← Теперь сохраняем на сервер!
-                modal.classList.remove('active');
-            });
-            
-            document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('active'));
-        }
-
-        function openEditContactsModal() {
-            const c = contacts;
-            const modal = document.getElementById('editModal');
-            const content = document.getElementById('editModalContent');
-            content.innerHTML = `
-                <h3>Редактировать контакты</h3>
-                <input id="modalTg" placeholder="Telegram (например @bibl)" value="${escapeHtml(c.tg || '')}">
-                <input id="modalWa" placeholder="WhatsApp (+7...)" value="${escapeHtml(c.wa || '')}">
-                <input id="modalVk" placeholder="VK (vk.com/...)" value="${escapeHtml(c.vk || '')}">
-                <input id="modalTgk" placeholder="Канал Telegram (t.me/...)" value="${escapeHtml(c.tgk || '')}">
-                <div class="modal-buttons">
-                    <button id="saveContactsBtn">Сохранить</button>
-                    <button class="cancel" id="cancelModal">Отмена</button>
-                </div>
-            `;
-            modal.classList.add('active');
-            
-            document.getElementById('saveContactsBtn').addEventListener('click', () => {
-                const newContacts = {
-                    tg: document.getElementById('modalTg').value,
-                    wa: document.getElementById('modalWa').value,
-                    vk: document.getElementById('modalVk').value,
-                    tgk: document.getElementById('modalTgk').value
-                };
-                saveContacts(newContacts); // ← Теперь сохраняем на сервер!
-                modal.classList.remove('active');
-            });
-            
-            document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('active'));
-        }
-
-        // ================== ОБНОВЛЁННЫЕ КНОПКИ ДОБАВЛЕНИЯ (теперь с выбором файла) ==================
-        document.getElementById('addExhibitionBtn').addEventListener('click', () => {
-            if (!isAdmin) return;
-            
-            // Создаём временное модальное окно для ввода данных и выбора файла
-            const modal = document.getElementById('editModal');
-            const content = document.getElementById('editModalContent');
-            content.innerHTML = `
-                <h3>Добавить работу</h3>
-                <input type="text" id="newTitle" placeholder="Название" value="Без названия">
-                <textarea id="newDescription" placeholder="Описание" rows="3"></textarea>
-                <input type="file" id="newImageFile" accept="image/*">
-                <div class="modal-buttons">
-                    <button id="saveNewBtn">Загрузить</button>
-                    <button class="cancel" id="cancelModal">Отмена</button>
-                </div>
-            `;
-            modal.classList.add('active');
-            
-            document.getElementById('saveNewBtn').addEventListener('click', async () => {
-                const fileInput = document.getElementById('newImageFile');
-                if (!fileInput.files || !fileInput.files[0]) {
-                    alert('Выберите файл изображения');
-                    return;
+            // ================== ЗАКРЫТИЕ МОДАЛОК ПО КЛИКУ ВНЕ ==================
+            window.addEventListener('click', (e) => {
+                if (e.target === document.getElementById('loginModal')) {
+                    document.getElementById('loginModal').classList.remove('active');
                 }
-                
-                const formData = new FormData();
-                formData.append('title', document.getElementById('newTitle').value || 'Без названия');
-                formData.append('description', document.getElementById('newDescription').value || '');
-                formData.append('section', 'exhibition');
-                
-                await addArtworkWithFile(formData, fileInput.files[0]);
-                modal.classList.remove('active');
-            });
-            
-            document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('active'));
-        });
-
-        document.getElementById('addShopBtn').addEventListener('click', () => {
-            if (!isAdmin) return;
-            
-            const modal = document.getElementById('editModal');
-            const content = document.getElementById('editModalContent');
-            content.innerHTML = `
-                <h3>Добавить товар</h3>
-                <input type="text" id="newTitle" placeholder="Название" value="Без названия">
-                <textarea id="newDescription" placeholder="Описание" rows="3"></textarea>
-                <input type="text" id="newPrice" placeholder="Цена" value="цена по запросу">
-                <input type="file" id="newImageFile" accept="image/*">
-                <div class="modal-buttons">
-                    <button id="saveNewBtn">Загрузить</button>
-                    <button class="cancel" id="cancelModal">Отмена</button>
-                </div>
-            `;
-            modal.classList.add('active');
-            
-            document.getElementById('saveNewBtn').addEventListener('click', async () => {
-                const fileInput = document.getElementById('newImageFile');
-                if (!fileInput.files || !fileInput.files[0]) {
-                    alert('Выберите файл изображения');
-                    return;
+                if (e.target === document.getElementById('editModal')) {
+                    document.getElementById('editModal').classList.remove('active');
                 }
-                
-                const formData = new FormData();
-                formData.append('title', document.getElementById('newTitle').value || 'Без названия');
-                formData.append('description', document.getElementById('newDescription').value || '');
-                formData.append('price', document.getElementById('newPrice').value || 'цена по запросу');
-                formData.append('section', 'shop');
-                
-                await addArtworkWithFile(formData, fileInput.files[0]);
-                modal.classList.remove('active');
+                if (e.target === document.getElementById('zoomModal')) {
+                    document.getElementById('zoomModal').classList.remove('active');
+                }
             });
+
+            // ================== ТЕТРИС ==================
+            const canvas = document.getElementById('tetrisCanvas');
+            const ctx = canvas?.getContext('2d');
+            const scoreElement = document.getElementById('gameScore');
             
-            document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('active'));
-        });
+            if (canvas && ctx && scoreElement) {
+                const COLS = 10;
+                const ROWS = 20;
+                const BLOCK_SIZE = canvas.width / COLS;
 
-        // ================== АВТОРИЗАЦИЯ ==================
-        document.getElementById('loginBtn').onclick = () => {
-            document.getElementById('loginModal').classList.add('active');
-        };
-        document.getElementById('cancelLogin').onclick = () => {
-            document.getElementById('loginModal').classList.remove('active');
-        };
-        document.getElementById('submitPassword').onclick = () => {
-            if (document.getElementById('passwordInput').value === ADMIN_PASSWORD) {
-                isAdmin = true;
-                document.body.classList.add('admin-mode');
-                document.getElementById('loginModal').classList.remove('active');
-                loadAllData(); // Перезагружаем все данные при входе
-            } else {
-                alert('Неверный пароль');
-            }
-        };
-        document.getElementById('logoutBtn').onclick = () => {
-            isAdmin = false;
-            document.body.classList.remove('admin-mode');
-            // При выходе показываем публичные данные (они уже загружены)
-        };
+                let grid = [];
+                let score = 0;
+                let gameActive = false;
+                let gamePaused = false;
+                let gameInterval;
+                
+                const pieces = [
+                    { shape: [[1,1,1,1]], color: '#faf9f7' },
+                    { shape: [[1,1],[1,1]], color: '#faf9f7' },
+                    { shape: [[0,1,0],[1,1,1]], color: '#faf9f7' },
+                    { shape: [[0,1,1],[1,1,0]], color: '#faf9f7' },
+                    { shape: [[1,1,0],[0,1,1]], color: '#faf9f7' },
+                    { shape: [[1,0,0],[1,1,1]], color: '#faf9f7' },
+                    { shape: [[0,0,1],[1,1,1]], color: '#faf9f7' }
+                ];
 
-        // ================== НАВИГАЦИЯ ==================
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                document.getElementById(btn.dataset.page + 'Page').classList.add('active');
-            });
-        });
+                let currentPiece = null;
+                let currentX = 0, currentY = 0;
 
-        // ================== ЗАКРЫТИЕ МОДАЛОК ПО КЛИКУ ВНЕ ==================
-        window.addEventListener('click', (e) => {
-            if (e.target === document.getElementById('loginModal')) {
-                document.getElementById('loginModal').classList.remove('active');
-            }
-            if (e.target === document.getElementById('editModal')) {
-                document.getElementById('editModal').classList.remove('active');
-            }
-            if (e.target === document.getElementById('zoomModal')) {
-                document.getElementById('zoomModal').classList.remove('active');
-            }
-        });
+                function initGrid() {
+                    grid = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+                }
 
-        // ================== ТЕТРИС (БЕЗ ИЗМЕНЕНИЙ) ==================
-        const canvas = document.getElementById('tetrisCanvas');
-        const ctx = canvas.getContext('2d');
-        const scoreElement = document.getElementById('gameScore');
-        
-        const COLS = 10;
-        const ROWS = 20;
-        const BLOCK_SIZE = canvas.width / COLS;
-
-        let grid = [];
-        let score = 0;
-        let gameActive = false;
-        let gamePaused = false;
-        let gameInterval;
-        
-        const pieces = [
-            { shape: [[1,1,1,1]], color: '#faf9f7' },
-            { shape: [[1,1],[1,1]], color: '#faf9f7' },
-            { shape: [[0,1,0],[1,1,1]], color: '#faf9f7' },
-            { shape: [[0,1,1],[1,1,0]], color: '#faf9f7' },
-            { shape: [[1,1,0],[0,1,1]], color: '#faf9f7' },
-            { shape: [[1,0,0],[1,1,1]], color: '#faf9f7' },
-            { shape: [[0,0,1],[1,1,1]], color: '#faf9f7' }
-        ];
-
-        let currentPiece = null;
-        let currentX = 0, currentY = 0;
-
-        function initGrid() {
-            grid = Array(ROWS).fill().map(() => Array(COLS).fill(0));
-        }
-
-        function spawnPiece() {
-            const piece = pieces[Math.floor(Math.random() * pieces.length)];
-            currentPiece = piece;
-            currentX = Math.floor((COLS - piece.shape[0].length) / 2);
-            currentY = 0;
-            
-            if (collision()) {
-                gameOver();
-            }
-        }
-
-        function collision() {
-            if (!currentPiece) return true;
-            for (let y = 0; y < currentPiece.shape.length; y++) {
-                for (let x = 0; x < currentPiece.shape[0].length; x++) {
-                    if (currentPiece.shape[y][x]) {
-                        const boardX = currentX + x;
-                        const boardY = currentY + y;
-                        if (boardX < 0 || boardX >= COLS || boardY >= ROWS || (boardY >= 0 && grid[boardY][boardX])) {
-                            return true;
-                        }
+                function spawnPiece() {
+                    const piece = pieces[Math.floor(Math.random() * pieces.length)];
+                    currentPiece = piece;
+                    currentX = Math.floor((COLS - piece.shape[0].length) / 2);
+                    currentY = 0;
+                    
+                    if (collision()) {
+                        gameOver();
                     }
                 }
-            }
-            return false;
-        }
 
-        function mergePiece() {
-            if (!currentPiece) return;
-            for (let y = 0; y < currentPiece.shape.length; y++) {
-                for (let x = 0; x < currentPiece.shape[0].length; x++) {
-                    if (currentPiece.shape[y][x]) {
-                        const boardY = currentY + y;
-                        const boardX = currentX + x;
-                        if (boardY >= 0) {
-                            grid[boardY][boardX] = 1;
+                function collision() {
+                    if (!currentPiece) return true;
+                    for (let y = 0; y < currentPiece.shape.length; y++) {
+                        for (let x = 0; x < currentPiece.shape[0].length; x++) {
+                            if (currentPiece.shape[y][x]) {
+                                const boardX = currentX + x;
+                                const boardY = currentY + y;
+                                if (boardX < 0 || boardX >= COLS || boardY >= ROWS || (boardY >= 0 && grid[boardY] && grid[boardY][boardX])) {
+                                    return true;
+                                }
+                            }
                         }
                     }
+                    return false;
                 }
-            }
-            checkLines();
-            spawnPiece();
-        }
 
-        function checkLines() {
-            let linesCleared = 0;
-            for (let y = ROWS - 1; y >= 0; y--) {
-                if (grid[y].every(cell => cell === 1)) {
-                    grid.splice(y, 1);
-                    grid.unshift(Array(COLS).fill(0));
-                    y++;
-                    linesCleared++;
+                function mergePiece() {
+                    if (!currentPiece) return;
+                    for (let y = 0; y < currentPiece.shape.length; y++) {
+                        for (let x = 0; x < currentPiece.shape[0].length; x++) {
+                            if (currentPiece.shape[y][x]) {
+                                const boardY = currentY + y;
+                                const boardX = currentX + x;
+                                if (boardY >= 0 && grid[boardY]) {
+                                    grid[boardY][boardX] = 1;
+                                }
+                            }
+                        }
+                    }
+                    checkLines();
+                    spawnPiece();
                 }
-            }
-            if (linesCleared > 0) {
-                score += linesCleared * 100;
-                scoreElement.textContent = score;
-            }
-        }
 
-        function movePiece(dx, dy) {
-            if (!gameActive || gamePaused || !currentPiece) return false;
-            currentX += dx;
-            currentY += dy;
-            if (collision()) {
-                currentX -= dx;
-                currentY -= dy;
-                if (dy === 1) {
-                    mergePiece();
+                function checkLines() {
+                    let linesCleared = 0;
+                    for (let y = ROWS - 1; y >= 0; y--) {
+                        if (grid[y] && grid[y].every(cell => cell === 1)) {
+                            grid.splice(y, 1);
+                            grid.unshift(Array(COLS).fill(0));
+                            y++;
+                            linesCleared++;
+                        }
+                    }
+                    if (linesCleared > 0) {
+                        score += linesCleared * 100;
+                        scoreElement.textContent = score;
+                    }
                 }
-                return false;
-            }
-            return true;
-        }
 
-        function rotatePiece() {
-            if (!gameActive || gamePaused || !currentPiece) return;
-            const rotated = currentPiece.shape[0].map((_, i) => currentPiece.shape.map(row => row[i]).reverse());
-            const originalShape = currentPiece.shape;
-            currentPiece.shape = rotated;
-            if (collision()) {
-                currentPiece.shape = originalShape;
-            }
-        }
+                function movePiece(dx, dy) {
+                    if (!gameActive || gamePaused || !currentPiece) return false;
+                    currentX += dx;
+                    currentY += dy;
+                    if (collision()) {
+                        currentX -= dx;
+                        currentY -= dy;
+                        if (dy === 1) {
+                            mergePiece();
+                        }
+                        return false;
+                    }
+                    return true;
+                }
 
-        function gameOver() {
-            gameActive = false;
-            clearInterval(gameInterval);
-        }
+                function rotatePiece() {
+                    if (!gameActive || gamePaused || !currentPiece) return;
+                    const rotated = currentPiece.shape[0].map((_, i) => currentPiece.shape.map(row => row[i]).reverse());
+                    const originalShape = currentPiece.shape;
+                    currentPiece.shape = rotated;
+                    if (collision()) {
+                        currentPiece.shape = originalShape;
+                    }
+                }
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = '#faf9f7';
-            ctx.lineWidth = 1;
-            
-            for (let y = 0; y < ROWS; y++) {
-                for (let x = 0; x < COLS; x++) {
-                    if (grid[y][x]) {
+                function gameOver() {
+                    gameActive = false;
+                    clearInterval(gameInterval);
+                }
+
+                function draw() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.strokeStyle = '#faf9f7';
+                    ctx.lineWidth = 1;
+                    
+                    for (let y = 0; y < ROWS; y++) {
+                        for (let x = 0; x < COLS; x++) {
+                            if (grid[y] && grid[y][x]) {
+                                ctx.fillStyle = '#faf9f7';
+                                ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
+                            } else {
+                                ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                            }
+                        }
+                    }
+                    
+                    if (currentPiece && gameActive) {
                         ctx.fillStyle = '#faf9f7';
-                        ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
-                    } else {
-                        ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-                    }
-                }
-            }
-            
-            if (currentPiece && gameActive) {
-                ctx.fillStyle = '#faf9f7';
-                for (let y = 0; y < currentPiece.shape.length; y++) {
-                    for (let x = 0; x < currentPiece.shape[0].length; x++) {
-                        if (currentPiece.shape[y][x]) {
-                            ctx.fillRect(
-                                (currentX + x) * BLOCK_SIZE,
-                                (currentY + y) * BLOCK_SIZE,
-                                BLOCK_SIZE-1,
-                                BLOCK_SIZE-1
-                            );
+                        for (let y = 0; y < currentPiece.shape.length; y++) {
+                            for (let x = 0; x < currentPiece.shape[0].length; x++) {
+                                if (currentPiece.shape[y][x]) {
+                                    ctx.fillRect(
+                                        (currentX + x) * BLOCK_SIZE,
+                                        (currentY + y) * BLOCK_SIZE,
+                                        BLOCK_SIZE-1,
+                                        BLOCK_SIZE-1
+                                    );
+                                }
+                            }
                         }
                     }
                 }
-            }
-        }
 
-        function gameLoop() {
-            if (gameActive && !gamePaused) {
-                movePiece(0, 1);
-            }
-            draw();
-        }
+                function gameLoop() {
+                    if (gameActive && !gamePaused) {
+                        movePiece(0, 1);
+                    }
+                    draw();
+                }
 
-        function startNewGame() {
-            if (gameInterval) clearInterval(gameInterval);
-            initGrid();
-            score = 0;
-            scoreElement.textContent = '0';
-            gameActive = true;
-            gamePaused = false;
-            spawnPiece();
-            gameInterval = setInterval(gameLoop, 300);
-        }
+                function startNewGame() {
+                    if (gameInterval) clearInterval(gameInterval);
+                    initGrid();
+                    score = 0;
+                    scoreElement.textContent = '0';
+                    gameActive = true;
+                    gamePaused = false;
+                    spawnPiece();
+                    gameInterval = setInterval(gameLoop, 300);
+                }
 
-        document.addEventListener('keydown', (e) => {
-            if (currentPage !== 'game' || !gameActive) return;
-            if (gamePaused) return;
-            
-            switch(e.key) {
-                case 'ArrowLeft': movePiece(-1, 0); draw(); break;
-                case 'ArrowRight': movePiece(1, 0); draw(); break;
-                case 'ArrowDown': movePiece(0, 1); draw(); break;
-                case 'ArrowUp': rotatePiece(); draw(); break;
-            }
-        });
+                document.addEventListener('keydown', (e) => {
+                    if (currentPage !== 'game' || !gameActive) return;
+                    if (gamePaused) return;
+                    
+                    switch(e.key) {
+                        case 'ArrowLeft': movePiece(-1, 0); draw(); break;
+                        case 'ArrowRight': movePiece(1, 0); draw(); break;
+                        case 'ArrowDown': movePiece(0, 1); draw(); break;
+                        case 'ArrowUp': rotatePiece(); draw(); break;
+                    }
+                });
 
-        document.getElementById('moveLeftBtn').addEventListener('click', () => {
-            if (currentPage === 'game' && gameActive && !gamePaused) {
-                movePiece(-1, 0);
-                draw();
-            }
-        });
-        
-        document.getElementById('moveRightBtn').addEventListener('click', () => {
-            if (currentPage === 'game' && gameActive && !gamePaused) {
-                movePiece(1, 0);
-                draw();
-            }
-        });
-        
-        document.getElementById('moveDownBtn').addEventListener('click', () => {
-            if (currentPage === 'game' && gameActive && !gamePaused) {
-                movePiece(0, 1);
-                draw();
-            }
-        });
-        
-        document.getElementById('rotateBtn').addEventListener('click', () => {
-            if (currentPage === 'game' && gameActive && !gamePaused) {
-                rotatePiece();
-                draw();
-            }
-        });
+                document.getElementById('moveLeftBtn')?.addEventListener('click', () => {
+                    if (currentPage === 'game' && gameActive && !gamePaused) {
+                        movePiece(-1, 0);
+                        draw();
+                    }
+                });
+                
+                document.getElementById('moveRightBtn')?.addEventListener('click', () => {
+                    if (currentPage === 'game' && gameActive && !gamePaused) {
+                        movePiece(1, 0);
+                        draw();
+                    }
+                });
+                
+                document.getElementById('moveDownBtn')?.addEventListener('click', () => {
+                    if (currentPage === 'game' && gameActive && !gamePaused) {
+                        movePiece(0, 1);
+                        draw();
+                    }
+                });
+                
+                document.getElementById('rotateBtn')?.addEventListener('click', () => {
+                    if (currentPage === 'game' && gameActive && !gamePaused) {
+                        rotatePiece();
+                        draw();
+                    }
+                });
 
-        document.getElementById('newGameBtn').addEventListener('click', startNewGame);
-        document.getElementById('pauseGameBtn').addEventListener('click', () => {
-            if (!gameActive) return;
-            gamePaused = !gamePaused;
-        });
+                document.getElementById('newGameBtn')?.addEventListener('click', startNewGame);
+                document.getElementById('pauseGameBtn')?.addEventListener('click', () => {
+                    if (!gameActive) return;
+                    gamePaused = !gamePaused;
+                });
+            }
 
-        // Запускаем загрузку всех данных при старте
-        loadAllData();
-    })();
-</script>
+            // Запускаем загрузку всех данных при старте
+            loadAllData();
+        })();
+    </script>
+</body>
+</html>

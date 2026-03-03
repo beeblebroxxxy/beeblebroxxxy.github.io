@@ -666,7 +666,9 @@
         // Проверяем, существует ли функция
         if (typeof showGistUpdateModal === 'function') {
             // Пробуем показать окно сразу
-            showGistUpdateModal(data);
+            alert('🔔 Сейчас вызовем showGistUpdateModal');
+showGistUpdateModal(data);
+alert('🔔 showGistUpdateModal завершила работу');
         } else {
             alert('Ошибка: функция showGistUpdateModal не найдена!');
         }

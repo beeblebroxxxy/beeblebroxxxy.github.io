@@ -679,10 +679,19 @@ function showGistUpdateModal(data) {
     
     // Превращаем данные в текст
     const jsonString = JSON.stringify(data, null, 2);
-    alert('🔔 JSON сформирован');
+    alert('🔔 JSON сформирован, длина: ' + jsonString.length + ' символов');
     
-    // Показываем JSON в простом alert
-    alert('JSON для Gist:\n\n' + jsonString);
+    // ПОКАЗЫВАЕМ JSON В ПРОСТОМ ALERT
+    // Разбиваем на части, если слишком длинный
+    if (jsonString.length > 1000) {
+        alert('⚠️ JSON очень длинный, покажу первую часть:\n\n' + jsonString.substring(0, 1000) + '...\n\n(остальное в следующем окне)');
+        alert('📋 Продолжение JSON:\n\n' + jsonString.substring(1000, 2000));
+        if (jsonString.length > 2000) {
+            alert('📋 И ещё часть:\n\n' + jsonString.substring(2000, 3000));
+        }
+    } else {
+        alert('📋 JSON для Gist:\n\n' + jsonString);
+    }
     
     alert('🔔 КОНЕЦ showGistUpdateModal');
 }

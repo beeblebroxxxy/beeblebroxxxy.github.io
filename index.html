@@ -652,20 +652,26 @@
 
                 // ========== СОХРАНЕНИЕ ДАННЫХ ==========
                 function saveData() {
-                    const data = {
-                        artworks: artworks,
-                        artistBio: artistBio,
-                        contacts: contacts
-                    };
-                    
-                    // Сохраняем в localStorage
-                    localStorage.setItem('biblSiteData', JSON.stringify(data));
-                    
-                    // Если мы в админке, показываем окно с JSON
-                    if (isAdmin) {
-                        showGistUpdateModal(data);
-                    }
-                }
+    const data = {
+        artworks: artworks,
+        artistBio: artistBio,
+        contacts: contacts
+    };
+    
+    // Сохраняем в localStorage
+    localStorage.setItem('biblSiteData', JSON.stringify(data));
+    
+    // Если мы в админке, показываем окно с JSON
+    if (isAdmin) {
+        // Проверяем, существует ли функция
+        if (typeof showGistUpdateModal === 'function') {
+            // Пробуем показать окно сразу
+            showGistUpdateModal(data);
+        } else {
+            alert('Ошибка: функция showGistUpdateModal не найдена!');
+        }
+    }
+}
 
                 // ========== МОДАЛКА ДЛЯ ОБНОВЛЕНИЯ GIST ==========
                 function showGistUpdateModal(data) {

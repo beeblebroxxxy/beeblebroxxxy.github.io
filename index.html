@@ -675,6 +675,9 @@
 
                 // ========== МОДАЛКА ДЛЯ ОБНОВЛЕНИЯ GIST ==========
                 function showGistUpdateModal(data) {
+                        // ПРИНУДИТЕЛЬНАЯ ПРОВЕРКА
+    alert('🔔 Функция showGistUpdateModal ВЫЗВАНА!');
+    console.log('Данные получены:', data);
                     const jsonString = JSON.stringify(data, null, 2);
                     
                     const modal = document.getElementById('editModal');

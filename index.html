@@ -674,48 +674,20 @@ alert('🔔 showGistUpdateModal завершила работу');
         }
     }
 }
-
+function showGistUpdateModal(data) {
+    alert('🔔 НАЧАЛО showGistUpdateModal');
+    
+    // Превращаем данные в текст
+    const jsonString = JSON.stringify(data, null, 2);
+    alert('🔔 JSON сформирован');
+    
+    // Показываем JSON в простом alert
+    alert('JSON для Gist:\n\n' + jsonString);
+    
+    alert('🔔 КОНЕЦ showGistUpdateModal');
+}
                 // ========== МОДАЛКА ДЛЯ ОБНОВЛЕНИЯ GIST ==========
-                function showGistUpdateModal(data) {
-                        // ПРИНУДИТЕЛЬНАЯ ПРОВЕРКА
-    alert('🔔 Функция showGistUpdateModal ВЫЗВАНА!');
-    console.log('Данные получены:', data);
-                    const jsonString = JSON.stringify(data, null, 2);
-                    
-                    const modal = document.getElementById('editModal');
-                    const content = document.getElementById('editModalContent');
-                    
-                    content.innerHTML = `
-                        <h3>📤 Обновите данные в Gist</h3>
-                        <p style="margin-bottom: 15px;">Скопируйте этот JSON и вставьте в ваш Gist:</p>
-                        <textarea id="exportData" rows="10" style="font-family: monospace; font-size: 12px; width: 100%; background: #f8f8f8;" readonly>${escapeHtml(jsonString)}</textarea>
-                        <div style="margin: 20px 0; padding: 15px; background: #e8f0fe; border-radius: 4px;">
-                            <p style="margin-bottom: 10px;"><strong>📋 Инструкция:</strong></p>
-                            <ol style="margin-left: 20px; color: #333; line-height: 1.8;">
-                                <li>Нажмите кнопку <strong>"Копировать JSON"</strong> ниже</li>
-                                <li>Откройте <a href="${GIST_EDIT_URL}" target="_blank" style="color: #1e1e1e; font-weight: bold;">Gist для редактирования</a></li>
-                                <li>Замените ВСЁ содержимое файла <strong>data.json</strong> на скопированный текст</li>
-                                <li>Нажмите зелёную кнопку <strong>"Update secret gist"</strong></li>
-                                <li>Готово! После обновления все увидят изменения</li>
-                            </ol>
-                        </div>
-                        <div class="modal-buttons">
-                            <button id="copyDataBtn" style="background: #27ae60;">📋 Копировать JSON</button>
-                            <button class="cancel" id="cancelModal">Закрыть</button>
-                        </div>
-                    `;
-                    
-                    modal.classList.add('active');
-                    
-                    document.getElementById('copyDataBtn').onclick = () => {
-                        const textarea = document.getElementById('exportData');
-                        textarea.select();
-                        document.execCommand('copy');
-                        alert('✅ JSON скопирован! Теперь вставьте его в Gist');
-                    };
-                    
-                    document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
-                }
+                
 
                 // ========== ЭКРАНИРОВАНИЕ HTML ==========
                 function escapeHtml(text) {

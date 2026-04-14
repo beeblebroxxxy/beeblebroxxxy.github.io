@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>библ • beeble.art</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -45,8 +44,6 @@
         .modal-content { background: white; padding: 35px 30px; max-width: 550px; width: 100%; max-height: 90vh; overflow-y: auto; border-radius: 4px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .modal-content h3 { font-weight: 300; font-size: 2rem; margin-bottom: 25px; border-left: 3px solid #1e1e1e; padding-left: 15px; }
         .modal-content input, .modal-content textarea { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #bbb; font-family: 'Georgia', serif; font-size: 1rem; }
-        .upload-area { margin: 15px 0; padding: 15px; border: 2px dashed #ccc; border-radius: 8px; text-align: center; cursor: pointer; transition: border-color 0.2s; }
-        .upload-area:hover { border-color: #1e1e1e; }
         .modal-buttons { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px; }
         .modal-content button { padding: 12px 30px; background: #1e1e1e; color: white; border: none; font-family: 'Georgia', serif; cursor: pointer; border-radius: 2px; }
         .modal-content button.cancel { background: #8f8f8f; }
@@ -63,6 +60,7 @@
             header { flex-direction: column; align-items: flex-start; }
             .mobile-controls .game-btn { width: 55px; height: 55px; font-size: 1.5rem; }
         }
+        .info-note { background: #e8e0d5; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; color: #4a4a4a; }
     </style>
 </head>
 <body>
@@ -92,8 +90,17 @@
         <div id="zoomModal" class="modal zoom-modal"><div class="modal-content"><img id="zoomImage" class="zoom-image"><div class="zoom-details"><h3 id="zoomTitle"></h3><p id="zoomDescription"></p><button class="cancel" onclick="closeZoomModal()">Закрыть</button></div></div></div>
 
         <section id="aboutPage" class="page active"><h1>библ</h1><div class="artist-bio" id="artistBioDisplay"></div></section>
-        <section id="exhibitionPage" class="page"><h1>выставка</h1><div class="admin-actions"><button class="add-btn" id="addExhibitionBtn">➕ Добавить работу</button></div><div class="art-grid" id="exhibitionGrid"></div></section>
-        <section id="shopPage" class="page"><h1>магазин</h1><div class="admin-actions"><button class="add-btn" id="addShopBtn">➕ Добавить товар</button></div><div class="art-grid" id="shopGrid"></div><div class="contact-block" id="contactsBlock"></div></section>
+        <section id="exhibitionPage" class="page">
+            <h1>выставка</h1>
+            <div class="admin-actions"><button class="add-btn" id="addExhibitionBtn">➕ Добавить работу</button></div>
+            <div class="art-grid" id="exhibitionGrid"></div>
+        </section>
+        <section id="shopPage" class="page">
+            <h1>магазин</h1>
+            <div class="admin-actions"><button class="add-btn" id="addShopBtn">➕ Добавить товар</button></div>
+            <div class="art-grid" id="shopGrid"></div>
+            <div class="contact-block" id="contactsBlock"></div>
+        </section>
         <section id="gamePage" class="page"><h1>тетрис</h1><div class="game-container"><canvas id="tetrisCanvas" width="300" height="600"></canvas><div class="score" id="gameScore">0</div><div class="game-controls"><button class="game-btn" id="newGameBtn">Новая</button><button class="game-btn" id="pauseGameBtn">Пауза</button></div><div class="mobile-controls"><button class="game-btn" id="moveLeftBtn">←</button><button class="game-btn" id="rotateBtn">↻</button><button class="game-btn" id="moveRightBtn">→</button><button class="game-btn" id="moveDownBtn">↓</button></div><p style="color:#aaa;">← → движение, ↑ поворот, ↓ ускорение</p></div></section>
     </div>
 
@@ -122,49 +129,18 @@
                 try {
                     const response = await fetch(GIST_RAW_URL + '?t=' + Date.now());
                     const data = await response.json();
-                    
                     artworks = data.artworks || { exhibition: [], shop: [] };
                     artistBio = data.artistBio || "Художница из Петербурга. Работаю с маслом, акрилом, текстилем.";
-                    contacts = data.contacts || {
-                        tg: "@gbibi_art",
-                        wa: "+7 999 123-45-67",
-                        vk: "vk.com/gbibi_art",
-                        tgk: "t.me/gbibi_channel"
-                    };
-                    
+                    contacts = data.contacts || { tg: "@gbibi_art", wa: "+7 999 123-45-67", vk: "vk.com/gbibi_art", tgk: "t.me/gbibi_channel" };
                     renderAll();
                 } catch (e) {
                     console.error('Ошибка загрузки:', e);
-                    document.getElementById('exhibitionGrid').innerHTML = '<p style="text-align:center;padding:40px;">⚠️ Ошибка загрузки данных</p>';
-                }
-            }
-            
-            // ========== ЗАГРУЗКА ФОТО ==========
-            async function uploadImage(file) {
-                const formData = new FormData();
-                formData.append('source', file);
-                formData.append('type', 'file');
-                formData.append('action', 'upload');
-                
-                try {
-                    const res = await fetch('https://freeimage.host/api/1/upload?key=6d207e02198a847aa98d0a2a901485a5', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const data = await res.json();
-                    if (data.status_code === 200 && data.image?.url) {
-                        return data.image.url;
-                    }
-                    throw new Error('Upload failed');
-                } catch (err) {
-                    console.error('Upload error:', err);
-                    return null;
                 }
             }
             
             function escapeHtml(s) { return String(s || '').replace(/[&<>]/g, function(m) { return { '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]; }); }
             
-            // ========== ПОКАЗАТЬ JSON ДЛЯ РУЧНОГО ОБНОВЛЕНИЯ ==========
+            // ========== МОДАЛКА С JSON ДЛЯ РУЧНОГО ОБНОВЛЕНИЯ ==========
             function showManualUpdateModal() {
                 const data = { artworks, artistBio, contacts };
                 const jsonString = JSON.stringify(data, null, 2);
@@ -193,64 +169,50 @@
                 document.getElementById('closeBtn').onclick = () => modal.classList.remove('active');
             }
             
-            // ========== МОДАЛКИ ДЛЯ ХУДОЖНИЦЫ ==========
+            // ========== МОДАЛКА ДОБАВЛЕНИЯ — ТОЛЬКО ССЫЛКА ==========
             function openAddModal(type) {
                 if (!isAdmin) return;
                 const modal = document.getElementById('editModal');
                 const content = document.getElementById('editModalContent');
                 const isShop = type === 'shop';
-                content.innerHTML = `<h3>${isShop ? '➕ Добавить товар' : '🖼️ Добавить работу'}</h3>
-                    <input id="modalTitle" placeholder="Название" value="Без названия">
-                    <textarea id="modalDesc" placeholder="Описание" rows="2"></textarea>
-                    ${isShop ? '<input id="modalPrice" placeholder="Цена" value="цена по запросу">' : ''}
-                    <div class="upload-area" id="uploadArea">📸 Нажмите или перетащите фото сюда<br><small>Поддерживаются JPG, PNG, GIF, WEBP</small></div>
-                    <div id="uploadPreview" style="display:none; margin-top:10px;">
-                        <img id="previewImg" style="max-width:100%; max-height:150px; border-radius:4px;">
-                        <div id="uploadStatus" style="font-size:0.85rem; margin-top:5px;"></div>
+                content.innerHTML = `
+                    <h3>${isShop ? '➕ Добавить товар' : '🖼️ Добавить работу'}</h3>
+                    
+                    <div class="info-note">
+                        📸 <strong>Как загрузить фото:</strong><br>
+                        1. Перейдите на <a href="https://freeimage.host" target="_blank">freeimage.host</a><br>
+                        2. Нажмите «Upload» → выберите фото<br>
+                        3. После загрузки нажмите «Copy Link»<br>
+                        4. Вставьте ссылку в поле ниже
                     </div>
+                    
+                    <input id="modalImageUrl" placeholder="Ссылка на фото (из freeimage.host)" required>
+                    <input id="modalTitle" placeholder="Название работы" value="Без названия">
+                    <textarea id="modalDesc" placeholder="Описание (необязательно)" rows="2"></textarea>
+                    ${isShop ? '<input id="modalPrice" placeholder="Цена" value="цена по запросу">' : ''}
+                    
                     <div class="modal-buttons">
                         <button id="saveBtn">Сохранить</button>
                         <button class="cancel" id="cancelBtn">Отмена</button>
-                    </div>`;
+                    </div>
+                `;
                 modal.classList.add('active');
                 
-                let uploadedUrl = null;
-                const uploadArea = document.getElementById('uploadArea');
-                const fileInput = document.createElement('input');
-                fileInput.type = 'file';
-                fileInput.accept = 'image/*';
-                fileInput.onchange = (e) => handleFile(e.target.files[0]);
-                uploadArea.onclick = () => fileInput.click();
-                uploadArea.ondragover = (e) => { e.preventDefault(); uploadArea.style.borderColor = '#2b5e2b'; };
-                uploadArea.ondragleave = () => uploadArea.style.borderColor = '#ccc';
-                uploadArea.ondrop = (e) => { e.preventDefault(); uploadArea.style.borderColor = '#ccc'; handleFile(e.dataTransfer.files[0]); };
-                
-                async function handleFile(file) {
-                    if (!file) return;
-                    const preview = document.getElementById('uploadPreview');
-                    const previewImg = document.getElementById('previewImg');
-                    const status = document.getElementById('uploadStatus');
-                    previewImg.src = URL.createObjectURL(file);
-                    preview.style.display = 'block';
-                    status.textContent = '⏳ Загрузка...';
-                    
-                    uploadedUrl = await uploadImage(file);
-                    if (uploadedUrl) {
-                        status.innerHTML = `✅ Загружено! <a href="${uploadedUrl}" target="_blank">открыть</a>`;
-                    } else {
-                        status.textContent = '❌ Ошибка, попробуйте другой файл';
-                    }
-                }
-                
                 document.getElementById('saveBtn').onclick = () => {
-                    if (!uploadedUrl) { alert('Загрузите изображение'); return; }
+                    const imageUrl = document.getElementById('modalImageUrl').value.trim();
+                    if (!imageUrl) {
+                        alert('Введите ссылку на фото из freeimage.host');
+                        return;
+                    }
+                    
                     const newItem = { 
                         id: Date.now() + Math.random(), 
                         title: document.getElementById('modalTitle').value || 'Без названия', 
                         description: document.getElementById('modalDesc').value || '', 
-                        image_url: uploadedUrl 
+                        image_url: imageUrl 
                     };
                     if (isShop) newItem.price = document.getElementById('modalPrice').value || 'цена по запросу';
+                    
                     artworks[type].push(newItem);
                     showManualUpdateModal();
                     modal.classList.remove('active');

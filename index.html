@@ -6,7 +6,6 @@
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>библ • beeble.art</title>
     <style>
-        /* ваш существующий CSS остаётся без изменений */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Georgia', 'Times New Roman', serif; background-color: #faf9f7; color: #1e1e1e; line-height: 1.6; font-size: 16px; }
         .container { max-width: 1400px; margin: 0 auto; padding: 30px 5%; }
@@ -139,12 +138,51 @@
                 document.getElementById('closeBtn').onclick = () => modal.classList.remove('active');
             }
             
+            // ========== НАДЁЖНАЯ ЗАГРУЗКА ЧЕРЕЗ FREEIMAGE.HOST ==========
             async function uploadImage(file) {
                 const formData = new FormData();
-                formData.append('image', file);
-                const res = await fetch('https://tmpfiles.org/api/v1/upload', { method: 'POST', body: formData });
-                const data = await res.json();
-                return data.data?.url || null;
+                formData.append('source', file);
+                formData.append('type', 'file');
+                formData.append('action', 'upload');
+                
+                try {
+                    // Используем freeimage.host - работает в РФ, изображения не удаляются
+                    const res = await fetch('https://freeimage.host/api/1/upload?key=6d207e02198a847aa98d0a2a901485a5', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await res.json();
+                    console.log('Upload response:', data);
+                    
+                    if (data.status_code === 200 && data.image?.url) {
+                        return data.image.url;
+                    } else if (data.image?.display_url) {
+                        return data.image.display_url;
+                    } else {
+                        throw new Error('Upload failed');
+                    }
+                } catch (err) {
+                    console.error('Upload error:', err);
+                    // Резервный вариант - через Catbox (тоже надёжный)
+                    return fallbackUpload(file);
+                }
+            }
+            
+            // Резервный вариант загрузки
+            async function fallbackUpload(file) {
+                const formData = new FormData();
+                formData.append('fileToUpload', file);
+                formData.append('reqtype', 'fileupload');
+                
+                const res = await fetch('https://catbox.moe/user/api.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const url = await res.text();
+                if (url.startsWith('http')) return url;
+                throw new Error('All upload methods failed');
             }
             
             function escapeHtml(s) { return String(s || '').replace(/[&<>]/g, function(m) { return { '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]; }); }
@@ -154,8 +192,21 @@
                 const modal = document.getElementById('editModal');
                 const content = document.getElementById('editModalContent');
                 const isShop = type === 'shop';
-                content.innerHTML = `<h3>${isShop ? '➕ Добавить товар' : '🖼️ Добавить работу'}</h3><input id="modalTitle" placeholder="Название"><textarea id="modalDesc" placeholder="Описание" rows="2"></textarea>${isShop ? '<input id="modalPrice" placeholder="Цена">' : ''}<div class="upload-area" id="uploadArea">📸 Нажмите или перетащите фото</div><div id="uploadPreview" style="display:none"><img id="previewImg" style="max-width:100%; max-height:150px"><div id="uploadStatus"></div></div><div class="modal-buttons"><button id="saveBtn">Сохранить</button><button class="cancel" id="cancelBtn">Отмена</button></div>`;
+                content.innerHTML = `<h3>${isShop ? '➕ Добавить товар' : '🖼️ Добавить работу'}</h3>
+                    <input id="modalTitle" placeholder="Название" value="Без названия">
+                    <textarea id="modalDesc" placeholder="Описание" rows="2"></textarea>
+                    ${isShop ? '<input id="modalPrice" placeholder="Цена" value="цена по запросу">' : ''}
+                    <div class="upload-area" id="uploadArea">📸 Нажмите или перетащите фото сюда<br><small>Поддерживаются JPG, PNG, GIF, WEBP</small></div>
+                    <div id="uploadPreview" style="display:none; margin-top:10px;">
+                        <img id="previewImg" style="max-width:100%; max-height:150px; border-radius:4px;">
+                        <div id="uploadStatus" style="font-size:0.85rem; margin-top:5px;"></div>
+                    </div>
+                    <div class="modal-buttons">
+                        <button id="saveBtn">Сохранить</button>
+                        <button class="cancel" id="cancelBtn">Отмена</button>
+                    </div>`;
                 modal.classList.add('active');
+                
                 let uploadedUrl = null;
                 const uploadArea = document.getElementById('uploadArea');
                 const fileInput = document.createElement('input');
@@ -165,7 +216,8 @@
                 uploadArea.onclick = () => fileInput.click();
                 uploadArea.ondragover = (e) => { e.preventDefault(); uploadArea.style.borderColor = '#2b5e2b'; };
                 uploadArea.ondragleave = () => uploadArea.style.borderColor = '#ccc';
-                uploadArea.ondrop = (e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); };
+                uploadArea.ondrop = (e) => { e.preventDefault(); uploadArea.style.borderColor = '#ccc'; handleFile(e.dataTransfer.files[0]); };
+                
                 async function handleFile(file) {
                     if (!file) return;
                     const preview = document.getElementById('uploadPreview');
@@ -173,14 +225,27 @@
                     const status = document.getElementById('uploadStatus');
                     previewImg.src = URL.createObjectURL(file);
                     preview.style.display = 'block';
-                    status.textContent = '⏳ Загрузка...';
+                    status.textContent = '⏳ Загрузка на сервер...';
+                    status.style.color = '#666';
+                    
                     uploadedUrl = await uploadImage(file);
-                    if (uploadedUrl) status.innerHTML = `✅ <a href="${uploadedUrl}" target="_blank">Готово</a>`;
-                    else status.textContent = '❌ Ошибка, попробуйте другой файл';
+                    if (uploadedUrl) {
+                        status.innerHTML = `✅ Загружено! <a href="${uploadedUrl}" target="_blank" style="color:#2b5e2b;">открыть</a>`;
+                        status.style.color = '#2b5e2b';
+                    } else {
+                        status.textContent = '❌ Ошибка загрузки, попробуйте другой файл';
+                        status.style.color = '#c0392b';
+                    }
                 }
+                
                 document.getElementById('saveBtn').onclick = () => {
-                    if (!uploadedUrl) { alert('Загрузите изображение'); return; }
-                    const newItem = { id: Date.now() + Math.random(), title: document.getElementById('modalTitle').value || 'Без названия', description: document.getElementById('modalDesc').value || '', image_url: uploadedUrl };
+                    if (!uploadedUrl) { alert('Пожалуйста, загрузите изображение'); return; }
+                    const newItem = { 
+                        id: Date.now() + Math.random(), 
+                        title: document.getElementById('modalTitle').value || 'Без названия', 
+                        description: document.getElementById('modalDesc').value || '', 
+                        image_url: uploadedUrl 
+                    };
                     if (isShop) newItem.price = document.getElementById('modalPrice').value || 'цена по запросу';
                     artworks[type].push(newItem);
                     saveData();
@@ -193,7 +258,7 @@
                 if (!isAdmin) return;
                 const modal = document.getElementById('editModal');
                 const content = document.getElementById('editModalContent');
-                content.innerHTML = `<h3>🗑️ Удалить?</h3><div class="modal-buttons"><button class="delete-confirm" id="confirmDelete">Да, удалить</button><button class="cancel" id="cancelModal">Отмена</button></div>`;
+                content.innerHTML = `<h3>🗑️ Удалить работу?</h3><p style="margin-bottom:30px;">Это действие нельзя отменить.</p><div class="modal-buttons"><button class="delete-confirm" id="confirmDelete">Да, удалить</button><button class="cancel" id="cancelModal">Отмена</button></div>`;
                 modal.classList.add('active');
                 document.getElementById('confirmDelete').onclick = () => { artworks[section] = artworks[section].filter(i => String(i.id) !== String(id)); saveData(); modal.classList.remove('active'); };
                 document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
@@ -203,7 +268,7 @@
                 if (!isAdmin) return;
                 const modal = document.getElementById('editModal');
                 const content = document.getElementById('editModalContent');
-                content.innerHTML = `<h3>✎ Редактировать описание</h3><textarea id="modalBio" rows="6">${escapeHtml(artistBio)}</textarea><div class="modal-buttons"><button id="saveBioBtn">Сохранить</button><button class="cancel" id="cancelModal">Отмена</button></div>`;
+                content.innerHTML = `<h3>✎ Редактировать описание</h3><textarea id="modalBio" rows="6" placeholder="Расскажите о себе...">${escapeHtml(artistBio)}</textarea><div class="modal-buttons"><button id="saveBioBtn">Сохранить</button><button class="cancel" id="cancelModal">Отмена</button></div>`;
                 modal.classList.add('active');
                 document.getElementById('saveBioBtn').onclick = () => { artistBio = document.getElementById('modalBio').value; saveData(); modal.classList.remove('active'); };
                 document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
@@ -213,7 +278,7 @@
                 if (!isAdmin) return;
                 const modal = document.getElementById('editModal');
                 const content = document.getElementById('editModalContent');
-                content.innerHTML = `<h3>✎ Контакты</h3><input id="modalTg" value="${escapeHtml(contacts.tg)}"><input id="modalWa" value="${escapeHtml(contacts.wa)}"><input id="modalVk" value="${escapeHtml(contacts.vk)}"><input id="modalTgk" value="${escapeHtml(contacts.tgk)}"><div class="modal-buttons"><button id="saveContactsBtn">Сохранить</button><button class="cancel" id="cancelModal">Отмена</button></div>`;
+                content.innerHTML = `<h3>✎ Контакты</h3><input id="modalTg" value="${escapeHtml(contacts.tg)}" placeholder="Telegram: @username"><input id="modalWa" value="${escapeHtml(contacts.wa)}" placeholder="WhatsApp: +7..."><input id="modalVk" value="${escapeHtml(contacts.vk)}" placeholder="VK: vk.com/..."><input id="modalTgk" value="${escapeHtml(contacts.tgk)}" placeholder="Telegram канал: t.me/..."><div class="modal-buttons"><button id="saveContactsBtn">Сохранить</button><button class="cancel" id="cancelModal">Отмена</button></div>`;
                 modal.classList.add('active');
                 document.getElementById('saveContactsBtn').onclick = () => { contacts = { tg: document.getElementById('modalTg').value, wa: document.getElementById('modalWa').value, vk: document.getElementById('modalVk').value, tgk: document.getElementById('modalTgk').value }; saveData(); modal.classList.remove('active'); };
                 document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
@@ -225,10 +290,10 @@
                 document.getElementById('editBioBtn')?.addEventListener('click', openEditBioModal);
                 
                 const exhGrid = document.getElementById('exhibitionGrid');
-                if (exhGrid) exhGrid.innerHTML = artworks.exhibition.length ? artworks.exhibition.map(item => `<div class="art-card"><div class="art-image-container" onclick="openZoomModal('${escapeHtml(item.image_url)}','${escapeHtml(item.title)}','${escapeHtml(item.description)}')"><img class="art-image" src="${escapeHtml(item.image_url)}" onerror="this.parentElement.innerHTML+='<div style=\\'padding:40px\\'>Ошибка</div>'"><div class="zoom-icon">🔍</div></div><div class="art-title">${escapeHtml(item.title)}</div><div class="art-description">${escapeHtml(item.description) || '—'}</div>${isAdmin ? `<button class="edit-btn" onclick="window.deleteItem('${item.id}','exhibition')">🗑️</button>` : ''}</div>`).join('') : '<p style="text-align:center;padding:40px;">Пока нет работ</p>';
+                if (exhGrid) exhGrid.innerHTML = artworks.exhibition.length ? artworks.exhibition.map(item => `<div class="art-card"><div class="art-image-container" onclick="openZoomModal('${escapeHtml(item.image_url)}','${escapeHtml(item.title)}','${escapeHtml(item.description)}')"><img class="art-image" src="${escapeHtml(item.image_url)}" onerror="this.onerror=null;this.parentElement.innerHTML+='<div style=\\'padding:40px; text-align:center\\'>🖼️ Не удалось загрузить</div>'"><div class="zoom-icon">🔍</div></div><div class="art-title">${escapeHtml(item.title)}</div><div class="art-description">${escapeHtml(item.description) || '—'}</div>${isAdmin ? `<button class="edit-btn" onclick="window.deleteItem('${item.id}','exhibition')">🗑️</button>` : ''}</div>`).join('') : '<p style="text-align:center;padding:40px;">Пока нет работ</p>';
                 
                 const shopGrid = document.getElementById('shopGrid');
-                if (shopGrid) shopGrid.innerHTML = artworks.shop.length ? artworks.shop.map(item => `<div class="art-card"><div class="art-image-container" onclick="openZoomModal('${escapeHtml(item.image_url)}','${escapeHtml(item.title)}','${escapeHtml(item.description)}')"><img class="art-image" src="${escapeHtml(item.image_url)}" onerror="this.parentElement.innerHTML+='<div style=\\'padding:40px\\'>Ошибка</div>'"><div class="zoom-icon">🔍</div></div><div class="art-title">${escapeHtml(item.title)}</div><div class="art-description">${escapeHtml(item.description) || '—'}</div><div class="art-price">${escapeHtml(item.price) || 'цена по запросу'}</div>${isAdmin ? `<button class="edit-btn" onclick="window.deleteItem('${item.id}','shop')">🗑️</button>` : ''}</div>`).join('') : '<p style="text-align:center;padding:40px;">Магазин пуст</p>';
+                if (shopGrid) shopGrid.innerHTML = artworks.shop.length ? artworks.shop.map(item => `<div class="art-card"><div class="art-image-container" onclick="openZoomModal('${escapeHtml(item.image_url)}','${escapeHtml(item.title)}','${escapeHtml(item.description)}')"><img class="art-image" src="${escapeHtml(item.image_url)}" onerror="this.onerror=null;this.parentElement.innerHTML+='<div style=\\'padding:40px; text-align:center\\'>🖼️ Не удалось загрузить</div>'"><div class="zoom-icon">🔍</div></div><div class="art-title">${escapeHtml(item.title)}</div><div class="art-description">${escapeHtml(item.description) || '—'}</div><div class="art-price">${escapeHtml(item.price) || 'цена по запросу'}</div>${isAdmin ? `<button class="edit-btn" onclick="window.deleteItem('${item.id}','shop')">🗑️</button>` : ''}</div>`).join('') : '<p style="text-align:center;padding:40px;">Магазин пуст</p>';
                 
                 const contactsBlock = document.getElementById('contactsBlock');
                 if (contactsBlock) contactsBlock.innerHTML = `<a href="https://t.me/${contacts.tg.replace('@','')}" target="_blank">📱 ${escapeHtml(contacts.tg)}</a><a href="https://wa.me/${contacts.wa.replace(/[^0-9]/g,'')}" target="_blank">📞 WhatsApp</a><a href="https://${contacts.vk.replace(/^https?:\/\//,'')}" target="_blank">📘 VK</a><a href="https://${contacts.tgk.replace(/^https?:\/\//,'')}" target="_blank">📢 Канал</a><button class="edit-contacts-btn" id="editContactsBtn">✎ ред. контакты</button>`;
@@ -268,7 +333,7 @@
             
             window.addEventListener('click', (e) => { if (e.target.classList?.contains('modal')) e.target.classList.remove('active'); });
             
-            // Тетрис
+            // ========== ТЕТРИС ==========
             const canvas = document.getElementById('tetrisCanvas');
             if (canvas) {
                 const ctx = canvas.getContext('2d');

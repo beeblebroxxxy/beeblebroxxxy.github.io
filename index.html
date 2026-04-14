@@ -89,7 +89,7 @@
 
         .art-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 30px 25px;
             margin-top: 30px;
         }
@@ -343,6 +343,18 @@
             border-color: #1e1e1e;
         }
 
+        .upload-area {
+            margin: 15px 0;
+            padding: 15px;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .upload-area:hover { border-color: #1e1e1e; }
+        .upload-area.drag-over { border-color: #2b5e2b; background: #f0f8f0; }
+        
         .modal-buttons {
             display: flex;
             gap: 15px;
@@ -378,10 +390,6 @@
             background: #c0392b;
         }
 
-        .modal-content button.delete-confirm:hover {
-            background: #a93226;
-        }
-
         .zoom-modal .modal-content {
             max-width: 900px;
             background: white;
@@ -400,12 +408,7 @@
             text-align: center;
         }
 
-        .zoom-details h3 {
-            font-size: 1.8rem;
-            font-weight: 300;
-            margin-bottom: 10px;
-        }
-
+        /* Тетрис стили */
         .game-container {
             display: flex;
             flex-direction: column;
@@ -471,10 +474,6 @@
             border: 1px solid #faf9f7;
         }
 
-        .mobile-controls .game-btn:hover {
-            background: #444;
-        }
-
         .score {
             font-size: 1.5rem;
             letter-spacing: 2px;
@@ -485,6 +484,7 @@
             nav { width: 100%; justify-content: space-around; }
             .art-grid { gap: 20px; }
             .contact-block { flex-direction: column; gap: 15px; }
+            .mobile-controls .game-btn { width: 55px; height: 55px; font-size: 1.5rem; }
         }
     </style>
 </head>
@@ -500,11 +500,10 @@
             </nav>
         </header>
 
-        <!-- Модалка для входа -->
         <div id="loginModal" class="modal">
             <div class="modal-content">
-                <h3>доступ</h3>
-                <input type="password" id="passwordInput" placeholder="пароль">
+                <h3>вход для художницы</h3>
+                <input type="password" id="passwordInput" placeholder="секретный пароль">
                 <div class="modal-buttons">
                     <button id="submitPassword">Войти</button>
                     <button class="cancel" id="cancelLogin">Отмена</button>
@@ -512,12 +511,10 @@
             </div>
         </div>
 
-        <!-- Универсальная модалка -->
         <div id="editModal" class="modal">
             <div class="modal-content" id="editModalContent"></div>
         </div>
 
-        <!-- Модалка для увеличения изображения -->
         <div id="zoomModal" class="modal zoom-modal">
             <div class="modal-content zoom-content">
                 <img id="zoomImage" class="zoom-image" src="" alt="Увеличенное изображение">
@@ -529,13 +526,11 @@
             </div>
         </div>
 
-        <!-- Страница "О художнице" -->
         <section id="aboutPage" class="page active">
             <h1>библ</h1>
             <div class="artist-bio" id="artistBioDisplay"></div>
         </section>
 
-        <!-- Страница "Выставка" -->
         <section id="exhibitionPage" class="page">
             <h1>выставка</h1>
             <div class="admin-actions">
@@ -544,7 +539,6 @@
             <div class="art-grid" id="exhibitionGrid"></div>
         </section>
 
-        <!-- Страница "Магазин" -->
         <section id="shopPage" class="page">
             <h1>магазин</h1>
             <div class="admin-actions">
@@ -554,7 +548,6 @@
             <div class="contact-block" id="contactsBlock"></div>
         </section>
 
-        <!-- Страница "Игра" -->
         <section id="gamePage" class="page">
             <h1>тетрис / пауза</h1>
             <div class="game-container">
@@ -577,714 +570,565 @@
 
     <script>
         (function() {
-            document.addEventListener('DOMContentLoaded', function() {
-                
-                // ========== ТВОИ ЛИЧНЫЕ ДАННЫЕ ==========
-                const ADMIN_PASSWORD = 'BiblVeta098123';
-                const GIST_URL = 'https://gist.githubusercontent.com/beeblebroxxxy/0df2c53d4a0d051231f79b9729709ea6/raw/data.json';
-                const GIST_EDIT_URL = 'https://gist.github.com/beeblebroxxxy/0df2c53d4a0d051231f79b9729709ea6/edit';
-                
-                // ========== СОСТОЯНИЕ ==========
-                let isAdmin = false;
-                
-                // Проверяем sessionStorage при загрузке
-                const savedAdmin = sessionStorage.getItem('bibl_admin');
-                if (savedAdmin === 'true') {
-                    isAdmin = true;
-                    document.body.classList.add('admin-mode');
-                }
-                
-                // Данные сайта
-                let artworks = { exhibition: [], shop: [] };
-                let artistBio = "Художница из Петербурга. Работаю с маслом, акрилом, текстилем.";
-                let contacts = { 
-                    tg: "@gbibi_art", 
-                    wa: "+7 999 123-45-67", 
-                    vk: "vk.com/gbibi_art", 
-                    tgk: "t.me/gbibi_channel" 
-                };
+            // ========== НАСТРОЙКИ ==========
+            const ADMIN_PASSWORD = 'BiblVeta098123';
+            const STORAGE_KEY = 'bibl_gallery_data';
+            
+            // Состояние
+            let isAdmin = false;
+            let artworks = { exhibition: [], shop: [] };
+            let artistBio = "Художница из Петербурга. Работаю с маслом, акрилом, текстилем. Вдохновляюсь городскими пейзажами и тихими моментами.";
+            let contacts = { 
+                tg: "@gbibi_art", 
+                wa: "+7 999 123-45-67", 
+                vk: "vk.com/gbibi_art", 
+                tgk: "t.me/gbibi_channel" 
+            };
 
-                // Проверка URL параметра для входа
-                const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.has('bibl_edit')) {
-                    document.getElementById('loginModal')?.classList.add('active');
-                }
+            // Проверяем сессию админа
+            if (sessionStorage.getItem('bibl_admin') === 'true') {
+                isAdmin = true;
+                document.body.classList.add('admin-mode');
+            }
+            
+            // Проверяем URL для входа
+            if (window.location.search.includes('bibl_edit')) {
+                document.getElementById('loginModal').classList.add('active');
+            }
 
-                // ========== ЗАГРУЗКА ДАННЫХ ИЗ GIST ==========
-                async function loadData() {
+            // ========== ЗАГРУЗКА / СОХРАНЕНИЕ ==========
+            function loadData() {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
                     try {
-                        console.log('🔄 Загружаем данные из Gist...');
-                        const response = await fetch(GIST_URL + '?t=' + Date.now());
-                        const data = await response.json();
-                        
-                        console.log('✅ Данные загружены:', data);
-                        
-                        if (data.artworks) {
-                            artworks.exhibition = data.artworks.exhibition || [];
-                            artworks.shop = data.artworks.shop || [];
-                        }
-                        if (data.artistBio) artistBio = data.artistBio;
-                        if (data.contacts) contacts = data.contacts;
-                        
-                        // Сохраняем в localStorage как резервную копию
-                        localStorage.setItem('biblSiteData', JSON.stringify({
-                            artworks: artworks,
-                            artistBio: artistBio,
-                            contacts: contacts
-                        }));
-                        
-                    } catch (e) {
-                        console.error('❌ Ошибка загрузки из Gist:', e);
-                        // Если Gist недоступен, грузим из localStorage
-                        const saved = localStorage.getItem('biblSiteData');
-                        if (saved) {
-                            try {
-                                const data = JSON.parse(saved);
-                                artworks = data.artworks || { exhibition: [], shop: [] };
-                                artistBio = data.artistBio || artistBio;
-                                contacts = data.contacts || contacts;
-                                console.log('📦 Загружено из localStorage');
-                            } catch (e) {}
-                        }
-                    }
-                    renderAll();
+                        const data = JSON.parse(saved);
+                        artworks = data.artworks || { exhibition: [], shop: [] };
+                        artistBio = data.artistBio || artistBio;
+                        contacts = data.contacts || contacts;
+                    } catch(e) {}
                 }
+                renderAll();
+            }
 
-                // ========== СОХРАНЕНИЕ ДАННЫХ ==========
-                function saveData() {
-    const data = {
-        artworks: artworks,
-        artistBio: artistBio,
-        contacts: contacts
-    };
-    
-    // Сохраняем в localStorage
-    localStorage.setItem('biblSiteData', JSON.stringify(data));
-    
-    // Если мы в админке, показываем окно с JSON
-    if (isAdmin) {
-        // Проверяем, существует ли функция
-        if (typeof showGistUpdateModal === 'function') {
-            // Пробуем показать окно сразу
-            alert('🔔 Сейчас вызовем showGistUpdateModal');
-showGistUpdateModal(data);
-alert('🔔 showGistUpdateModal завершила работу');
-        } else {
-            alert('Ошибка: функция showGistUpdateModal не найдена!');
-        }
-    }
-}
-function showGistUpdateModal(data) {
-    alert('🔔 НАЧАЛО showGistUpdateModal');
-    
-    // Превращаем данные в текст
-    const jsonString = JSON.stringify(data, null, 2);
-    alert('🔔 JSON сформирован, длина: ' + jsonString.length + ' символов');
-    
-    // ПОКАЗЫВАЕМ JSON В ПРОСТОМ ALERT
-    // Разбиваем на части, если слишком длинный
-    if (jsonString.length > 1000) {
-        alert('⚠️ JSON очень длинный, покажу первую часть:\n\n' + jsonString.substring(0, 1000) + '...\n\n(остальное в следующем окне)');
-        alert('📋 Продолжение JSON:\n\n' + jsonString.substring(1000, 2000));
-        if (jsonString.length > 2000) {
-            alert('📋 И ещё часть:\n\n' + jsonString.substring(2000, 3000));
-        }
-    } else {
-        alert('📋 JSON для Gist:\n\n' + jsonString);
-    }
-    
-    alert('🔔 КОНЕЦ showGistUpdateModal');
-}
-                // ========== МОДАЛКА ДЛЯ ОБНОВЛЕНИЯ GIST ==========
+            function saveData() {
+                const data = { artworks, artistBio, contacts };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                renderAll();
+                if (isAdmin) {
+                    showGistHelper();
+                }
+            }
+            
+            function showGistHelper() {
+                const jsonData = JSON.stringify({ artworks, artistBio, contacts }, null, 2);
+                const modal = document.getElementById('editModal');
+                const content = document.getElementById('editModalContent');
+                content.innerHTML = `
+                    <h3>📦 Резервная копия</h3>
+                    <p style="margin-bottom: 15px;">Данные сохранены в браузере. Чтобы перенести на другой компьютер, скопируйте JSON:</p>
+                    <textarea id="backupJson" rows="10" style="width:100%; font-family: monospace; font-size:12px;" readonly>${escapeHtml(jsonData)}</textarea>
+                    <div class="modal-buttons">
+                        <button id="copyBackupBtn">📋 Скопировать</button>
+                        <button class="cancel" id="closeBackupBtn">Закрыть</button>
+                    </div>
+                `;
+                modal.classList.add('active');
+                document.getElementById('copyBackupBtn').onclick = () => {
+                    const textarea = document.getElementById('backupJson');
+                    textarea.select();
+                    document.execCommand('copy');
+                    alert('JSON скопирован!');
+                };
+                document.getElementById('closeBackupBtn').onclick = () => modal.classList.remove('active');
+            }
+
+            // ========== ЗАГРУЗКА НА ImgPeek (российский хостинг) ==========
+            async function uploadToImgPeek(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = async function(e) {
+                        try {
+                            const base64 = e.target.result.split(',')[1];
+                            const formData = new FormData();
+                            formData.append('image', file);
+                            
+                            // Прокси через бесплатный сервис загрузки (работает в РФ)
+                            const response = await fetch('https://tmpfiles.org/api/v1/upload', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            const result = await response.json();
+                            if (result.status === 'success' && result.data.url) {
+                                resolve(result.data.url);
+                            } else {
+                                throw new Error('Upload failed');
+                            }
+                        } catch(err) {
+                            reject(err);
+                        }
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
+            function escapeHtml(text) {
+                if (!text) return '';
+                return String(text).replace(/[&<>]/g, function(m) {
+                    if (m === '&') return '&amp;';
+                    if (m === '<') return '&lt;';
+                    if (m === '>') return '&gt;';
+                    return m;
+                }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+                    return c;
+                });
+            }
+
+            function openAddModal(type) {
+                if (!isAdmin) return;
+                const modal = document.getElementById('editModal');
+                const content = document.getElementById('editModalContent');
+                const isShop = type === 'shop';
+                content.innerHTML = `
+                    <h3>${isShop ? '➕ Добавить товар' : '🖼️ Добавить работу'}</h3>
+                    <input id="modalTitle" placeholder="Название" value="Без названия">
+                    <textarea id="modalDesc" placeholder="Описание" rows="2"></textarea>
+                    ${isShop ? '<input id="modalPrice" placeholder="Цена" value="цена по запросу">' : ''}
+                    
+                    <div class="upload-area" id="uploadArea">
+                        📸 Нажмите или перетащите фото сюда<br>
+                        <small>Поддерживаются JPG, PNG, GIF, WEBP</small>
+                        <input type="file" id="imageUpload" accept="image/*" style="display:none">
+                    </div>
+                    <div id="uploadPreview" style="margin-top:10px; display:none;">
+                        <img id="previewImg" style="max-width:100%; max-height:150px; border-radius:4px;">
+                        <div id="uploadStatus" style="font-size:0.85rem; margin-top:5px;"></div>
+                    </div>
+                    
+                    <div class="modal-buttons">
+                        <button id="saveItemBtn">Сохранить</button>
+                        <button class="cancel" id="cancelModal">Отмена</button>
+                    </div>
+                `;
+                modal.classList.add('active');
                 
-
-                // ========== ЭКРАНИРОВАНИЕ HTML ==========
-                function escapeHtml(text) {
-                    if (!text) return '';
-                    return String(text)
-                        .replace(/&/g, '&amp;')
-                        .replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;')
-                        .replace(/"/g, '&quot;')
-                        .replace(/'/g, '&#039;');
+                let uploadedUrl = null;
+                const uploadArea = document.getElementById('uploadArea');
+                const fileInput = document.getElementById('imageUpload');
+                const previewDiv = document.getElementById('uploadPreview');
+                const previewImg = document.getElementById('previewImg');
+                const uploadStatus = document.getElementById('uploadStatus');
+                
+                uploadArea.addEventListener('click', () => fileInput.click());
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('drag-over');
+                });
+                uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+                uploadArea.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('drag-over');
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        await handleFileUpload(file);
+                    } else {
+                        alert('Пожалуйста, загрузите изображение');
+                    }
+                });
+                
+                fileInput.addEventListener('change', async (e) => {
+                    if (e.target.files[0]) await handleFileUpload(e.target.files[0]);
+                });
+                
+                async function handleFileUpload(file) {
+                    previewImg.src = URL.createObjectURL(file);
+                    previewDiv.style.display = 'block';
+                    uploadStatus.textContent = '⏳ Загрузка на сервер...';
+                    try {
+                        uploadedUrl = await uploadToImgPeek(file);
+                        uploadStatus.innerHTML = `✅ Загружено! <a href="${uploadedUrl}" target="_blank">открыть</a>`;
+                    } catch(err) {
+                        uploadStatus.textContent = '❌ Ошибка загрузки, попробуйте другой файл';
+                        uploadedUrl = null;
+                    }
                 }
-
-                // ========== ВАЛИДАЦИЯ URL ==========
-                function isValidImageUrl(url) {
-                    if (!url || typeof url !== 'string') return false;
-                    url = url.trim().toLowerCase();
-                    if (!url.startsWith('http://') && !url.startsWith('https://')) return false;
-                    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
-                    if (imageExtensions.some(ext => url.includes(ext))) return true;
-                    const imageHosts = ['imgur.com', 'img.peek', 'postimg.cc', 'ibb.co'];
-                    if (imageHosts.some(host => url.includes(host))) return true;
-                    return false;
-                }
-
-                // ========== ЗАГЛУШКА ДЛЯ ИЗОБРАЖЕНИЙ ==========
-                function getImagePlaceholder() {
-                    return 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22200%22%20height%3D%22200%22%20viewBox%3D%220%200%20200%20200%22%3E%3Crect%20width%3D%22200%22%20height%3D%22200%22%20fill%3D%22%23f0f0f0%22%2F%3E%3Ctext%20x%3D%2220%22%20y%3D%22110%22%20font-family%3D%22Georgia%22%20font-size%3D%2216%22%20fill%3D%22%23666%22%3E%D0%98%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%BD%D0%B5%20%D0%B7%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%B8%D0%BB%D0%BE%D1%81%D1%8C%3C%2Ftext%3E%3C%2Fsvg%3E';
-                }
-
-                // ========== РЕНДЕРИНГ ==========
-                function renderAll() {
-                    renderBio();
-                    renderExhibition();
-                    renderShop();
-                    renderContacts();
-                }
-
-                function renderBio() {
-                    const bioDisplay = document.getElementById('artistBioDisplay');
-                    if (!bioDisplay) return;
-                    bioDisplay.innerHTML = `
-                        ${escapeHtml(artistBio).replace(/\n/g, '<br>')}
-                        <button class="edit-bio-btn edit-btn" id="editBioBtn" title="Редактировать описание">✎</button>
-                    `;
-                    const editBioBtn = document.getElementById('editBioBtn');
-                    if (editBioBtn) editBioBtn.addEventListener('click', openEditBioModal);
-                }
-
-                function renderExhibition() {
-                    const exhGrid = document.getElementById('exhibitionGrid');
-                    if (!exhGrid) return;
-                    if (artworks.exhibition.length === 0) {
-                        exhGrid.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">В разделе пока нет работ</p>';
+                
+                document.getElementById('saveItemBtn').onclick = () => {
+                    const title = document.getElementById('modalTitle').value.trim() || 'Без названия';
+                    const desc = document.getElementById('modalDesc').value || '';
+                    const price = isShop ? document.getElementById('modalPrice').value || 'цена по запросу' : undefined;
+                    
+                    if (!uploadedUrl) {
+                        alert('Пожалуйста, загрузите изображение');
                         return;
                     }
-                    exhGrid.innerHTML = artworks.exhibition.map(item => `
-                        <div class="art-card" data-id="${item.id}">
-                            <div class="art-image-container" onclick="window.openZoom('${escapeHtml(item.image_url)}', '${escapeHtml(item.title)}', '${escapeHtml(item.description)}')">
-                                <img class="art-image" src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.title)}" 
-                                     onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML += '<div class=\\'image-error\\'>🖼️ Изображение не загрузилось</div>';">
-                                <div class="zoom-icon">🔍</div>
-                            </div>
-                            <div class="art-title">${escapeHtml(item.title)}</div>
-                            <div class="art-description">${escapeHtml(item.description) || '—'}</div>
-                            ${isAdmin ? `<button class="edit-btn" onclick="window.deleteItem('${item.id}', 'exhibition')" title="Удалить">🗑️</button>` : ''}
-                        </div>
-                    `).join('');
-                }
+                    
+                    const newItem = {
+                        id: Date.now() + Math.random() * 10000,
+                        title: title,
+                        description: desc,
+                        image_url: uploadedUrl
+                    };
+                    if (isShop) newItem.price = price;
+                    
+                    artworks[type].push(newItem);
+                    saveData();
+                    modal.classList.remove('active');
+                };
+                document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
+            }
 
-                function renderShop() {
-                    const shopGrid = document.getElementById('shopGrid');
-                    if (!shopGrid) return;
-                    if (artworks.shop.length === 0) {
-                        shopGrid.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">В магазине пока нет товаров</p>';
-                        return;
-                    }
-                    shopGrid.innerHTML = artworks.shop.map(item => `
-                        <div class="art-card" data-id="${item.id}">
-                            <div class="art-image-container" onclick="window.openZoom('${escapeHtml(item.image_url)}', '${escapeHtml(item.title)}', '${escapeHtml(item.description)}')">
-                                <img class="art-image" src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.title)}"
-                                     onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML += '<div class=\\'image-error\\'>🖼️ Изображение не загрузилось</div>';">
-                                <div class="zoom-icon">🔍</div>
-                            </div>
-                            <div class="art-title">${escapeHtml(item.title)}</div>
-                            <div class="art-description">${escapeHtml(item.description) || '—'}</div>
-                            <div class="art-price">${escapeHtml(item.price) || 'цена по запросу'}</div>
-                            ${isAdmin ? `<button class="edit-btn" onclick="window.deleteItem('${item.id}', 'shop')" title="Удалить">🗑️</button>` : ''}
-                        </div>
-                    `).join('');
-                }
+            function deleteItem(id, section) {
+                if (!isAdmin) return;
+                const modal = document.getElementById('editModal');
+                const content = document.getElementById('editModalContent');
+                content.innerHTML = `
+                    <h3>🗑️ Удалить работу?</h3>
+                    <p style="margin-bottom:30px;">Это действие нельзя отменить.</p>
+                    <div class="modal-buttons">
+                        <button class="delete-confirm" id="confirmDelete">Да, удалить</button>
+                        <button class="cancel" id="cancelModal">Отмена</button>
+                    </div>
+                `;
+                modal.classList.add('active');
+                document.getElementById('confirmDelete').onclick = () => {
+                    artworks[section] = artworks[section].filter(item => String(item.id) !== String(id));
+                    saveData();
+                    modal.classList.remove('active');
+                };
+                document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
+            }
 
-                function renderContacts() {
-                    const contactsBlock = document.getElementById('contactsBlock');
-                    if (!contactsBlock) return;
-                    contactsBlock.innerHTML = `
-                        <a href="https://t.me/${contacts.tg.replace('@', '')}" target="_blank">📱 TG: ${escapeHtml(contacts.tg)}</a>
+            function openEditBioModal() {
+                if (!isAdmin) return;
+                const modal = document.getElementById('editModal');
+                const content = document.getElementById('editModalContent');
+                content.innerHTML = `
+                    <h3>✎ Редактировать описание</h3>
+                    <textarea id="modalBio" rows="6" placeholder="Расскажите о себе...">${escapeHtml(artistBio)}</textarea>
+                    <div class="modal-buttons">
+                        <button id="saveBioBtn">Сохранить</button>
+                        <button class="cancel" id="cancelModal">Отмена</button>
+                    </div>
+                `;
+                modal.classList.add('active');
+                document.getElementById('saveBioBtn').onclick = () => {
+                    artistBio = document.getElementById('modalBio').value;
+                    saveData();
+                    modal.classList.remove('active');
+                };
+                document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
+            }
+
+            function openEditContactsModal() {
+                if (!isAdmin) return;
+                const modal = document.getElementById('editModal');
+                const content = document.getElementById('editModalContent');
+                content.innerHTML = `
+                    <h3>✎ Контакты</h3>
+                    <input id="modalTg" value="${escapeHtml(contacts.tg)}" placeholder="Telegram: @username">
+                    <input id="modalWa" value="${escapeHtml(contacts.wa)}" placeholder="WhatsApp: +7...">
+                    <input id="modalVk" value="${escapeHtml(contacts.vk)}" placeholder="VK: vk.com/...">
+                    <input id="modalTgk" value="${escapeHtml(contacts.tgk)}" placeholder="Telegram канал: t.me/...">
+                    <div class="modal-buttons">
+                        <button id="saveContactsBtn">Сохранить</button>
+                        <button class="cancel" id="cancelModal">Отмена</button>
+                    </div>
+                `;
+                modal.classList.add('active');
+                document.getElementById('saveContactsBtn').onclick = () => {
+                    contacts = {
+                        tg: document.getElementById('modalTg').value || '@',
+                        wa: document.getElementById('modalWa').value || '+7',
+                        vk: document.getElementById('modalVk').value || '',
+                        tgk: document.getElementById('modalTgk').value || ''
+                    };
+                    saveData();
+                    modal.classList.remove('active');
+                };
+                document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
+            }
+
+            // ========== РЕНДЕРИНГ ==========
+            function renderAll() {
+                renderBio();
+                renderExhibition();
+                renderShop();
+                renderContacts();
+            }
+
+            function renderBio() {
+                const bioDiv = document.getElementById('artistBioDisplay');
+                if (bioDiv) {
+                    bioDiv.innerHTML = `${escapeHtml(artistBio).replace(/\n/g, '<br>')}<button class="edit-bio-btn edit-btn" id="editBioBtn">✎</button>`;
+                    document.getElementById('editBioBtn')?.addEventListener('click', openEditBioModal);
+                }
+            }
+
+            function renderExhibition() {
+                const grid = document.getElementById('exhibitionGrid');
+                if (!grid) return;
+                if (!artworks.exhibition.length) {
+                    grid.innerHTML = '<p style="text-align:center; color:#888; padding:40px;">Пока нет работ</p>';
+                    return;
+                }
+                grid.innerHTML = artworks.exhibition.map(item => `
+                    <div class="art-card">
+                        <div class="art-image-container" onclick="window.openZoom('${escapeHtml(item.image_url)}', '${escapeHtml(item.title)}', '${escapeHtml(item.description)}')">
+                            <img class="art-image" src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.title)}" onerror="this.onerror=null; this.parentElement.innerHTML+='<div class=\\'image-error\\'>🖼️ Ошибка загрузки</div>';">
+                            <div class="zoom-icon">🔍</div>
+                        </div>
+                        <div class="art-title">${escapeHtml(item.title)}</div>
+                        <div class="art-description">${escapeHtml(item.description) || '—'}</div>
+                        ${isAdmin ? `<button class="edit-btn" onclick="window.deleteItem('${item.id}', 'exhibition')">🗑️</button>` : ''}
+                    </div>
+                `).join('');
+            }
+
+            function renderShop() {
+                const grid = document.getElementById('shopGrid');
+                if (!grid) return;
+                if (!artworks.shop.length) {
+                    grid.innerHTML = '<p style="text-align:center; color:#888; padding:40px;">Магазин пуст</p>';
+                    return;
+                }
+                grid.innerHTML = artworks.shop.map(item => `
+                    <div class="art-card">
+                        <div class="art-image-container" onclick="window.openZoom('${escapeHtml(item.image_url)}', '${escapeHtml(item.title)}', '${escapeHtml(item.description)}')">
+                            <img class="art-image" src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.title)}" onerror="this.onerror=null; this.parentElement.innerHTML+='<div class=\\'image-error\\'>🖼️ Ошибка загрузки</div>';">
+                            <div class="zoom-icon">🔍</div>
+                        </div>
+                        <div class="art-title">${escapeHtml(item.title)}</div>
+                        <div class="art-description">${escapeHtml(item.description) || '—'}</div>
+                        <div class="art-price">${escapeHtml(item.price) || 'цена по запросу'}</div>
+                        ${isAdmin ? `<button class="edit-btn" onclick="window.deleteItem('${item.id}', 'shop')">🗑️</button>` : ''}
+                    </div>
+                `).join('');
+            }
+
+            function renderContacts() {
+                const block = document.getElementById('contactsBlock');
+                if (block) {
+                    block.innerHTML = `
+                        <a href="https://t.me/${contacts.tg.replace('@', '')}" target="_blank">📱 ${escapeHtml(contacts.tg)}</a>
                         <a href="https://wa.me/${contacts.wa.replace(/[^0-9]/g, '')}" target="_blank">📞 WhatsApp</a>
-                        <a href="https://${contacts.vk}" target="_blank">📘 VK: ${escapeHtml(contacts.vk)}</a>
-                        <a href="https://${contacts.tgk}" target="_blank">📢 Канал: ${escapeHtml(contacts.tgk)}</a>
+                        <a href="https://${contacts.vk.replace(/^https?:\/\//, '')}" target="_blank">📘 VK</a>
+                        <a href="https://${contacts.tgk.replace(/^https?:\/\//, '')}" target="_blank">📢 Telegram канал</a>
                         <button class="edit-contacts-btn" id="editContactsBtn">✎ ред. контакты</button>
                     `;
-                    const editContactsBtn = document.getElementById('editContactsBtn');
-                    if (editContactsBtn) editContactsBtn.addEventListener('click', openEditContactsModal);
+                    document.getElementById('editContactsBtn')?.addEventListener('click', openEditContactsModal);
                 }
+            }
 
-                // ========== ГЛОБАЛЬНЫЕ ФУНКЦИИ ==========
-                window.openZoom = function(img, title, desc) {
-                    const zoomImg = document.getElementById('zoomImage');
-                    zoomImg.src = img;
-                    zoomImg.onerror = function() {
-                        this.src = getImagePlaceholder();
-                        this.style.objectFit = 'contain';
-                    };
-                    document.getElementById('zoomTitle').innerText = title;
-                    document.getElementById('zoomDescription').innerText = desc;
-                    document.getElementById('zoomModal').classList.add('active');
-                };
+            // Глобальные функции
+            window.openZoom = function(img, title, desc) {
+                const zoomImg = document.getElementById('zoomImage');
+                zoomImg.src = img;
+                zoomImg.onerror = function() { this.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect width=%22200%22 height=%22200%22 fill=%22%23eee%22/%3E%3Ctext x=%2250%22 y=%22100%22%3EОшибка%3C/text%3E%3C/svg%3E'; };
+                document.getElementById('zoomTitle').innerText = title;
+                document.getElementById('zoomDescription').innerText = desc;
+                document.getElementById('zoomModal').classList.add('active');
+            };
+            window.deleteItem = deleteItem;
 
-                window.deleteItem = function(id, section) {
-                    if (!isAdmin) return;
-                    const modal = document.getElementById('editModal');
-                    const content = document.getElementById('editModalContent');
-                    content.innerHTML = `
-                        <h3>Подтверждение</h3>
-                        <p style="margin-bottom: 30px; font-size: 1.2rem;">Удалить эту работу?</p>
-                        <div class="modal-buttons">
-                            <button class="delete-confirm" id="confirmDelete" style="background: #c0392b;">Удалить</button>
-                            <button class="cancel" id="cancelModal">Отмена</button>
-                        </div>
-                    `;
-                    modal.classList.add('active');
-                    document.getElementById('confirmDelete').onclick = () => {
-                        artworks[section] = artworks[section].filter(item => String(item.id) !== String(id));
-                        saveData();
-                        renderAll();
-                        modal.classList.remove('active');
-                    };
-                    document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
-                };
-
-                // ========== МОДАЛКА РЕДАКТИРОВАНИЯ ОПИСАНИЯ ==========
-                function openEditBioModal() {
-                    if (!isAdmin) return;
-                    const modal = document.getElementById('editModal');
-                    const content = document.getElementById('editModalContent');
-                    content.innerHTML = `
-                        <h3>Редактировать описание</h3>
-                        <textarea id="modalBio" rows="8" placeholder="Введите текст описания...">${escapeHtml(artistBio)}</textarea>
-                        <div class="modal-buttons">
-                            <button id="saveBioBtn">Сохранить</button>
-                            <button class="cancel" id="cancelModal">Отмена</button>
-                        </div>
-                    `;
-                    modal.classList.add('active');
-                    document.getElementById('saveBioBtn').onclick = () => {
-                        artistBio = document.getElementById('modalBio').value;
-                        saveData();
-                        renderAll();
-                        modal.classList.remove('active');
-                    };
-                    document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
-                }
-
-                // ========== МОДАЛКА РЕДАКТИРОВАНИЯ КОНТАКТОВ ==========
-                function openEditContactsModal() {
-                    if (!isAdmin) return;
-                    const modal = document.getElementById('editModal');
-                    const content = document.getElementById('editModalContent');
-                    content.innerHTML = `
-                        <h3>Редактировать контакты</h3>
-                        <input id="modalTg" value="${escapeHtml(contacts.tg || '')}" placeholder="Telegram: @username">
-                        <input id="modalWa" value="${escapeHtml(contacts.wa || '')}" placeholder="WhatsApp: +7 999 123-45-67">
-                        <input id="modalVk" value="${escapeHtml(contacts.vk || '')}" placeholder="VK: vk.com/username">
-                        <input id="modalTgk" value="${escapeHtml(contacts.tgk || '')}" placeholder="Telegram канал: t.me/channel">
-                        <div class="modal-buttons">
-                            <button id="saveContactsBtn">Сохранить</button>
-                            <button class="cancel" id="cancelModal">Отмена</button>
-                        </div>
-                    `;
-                    modal.classList.add('active');
-                    document.getElementById('saveContactsBtn').onclick = () => {
-                        contacts = {
-                            tg: document.getElementById('modalTg').value || '@gbibi_art',
-                            wa: document.getElementById('modalWa').value || '+7 999 123-45-67',
-                            vk: document.getElementById('modalVk').value || 'vk.com/gbibi_art',
-                            tgk: document.getElementById('modalTgk').value || 't.me/gbibi_channel'
-                        };
-                        saveData();
-                        renderAll();
-                        modal.classList.remove('active');
-                    };
-                    document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
-                }
-
-                // ========== ДОБАВЛЕНИЕ РАБОТЫ ==========
-                document.getElementById('addExhibitionBtn')?.addEventListener('click', () => {
-                    if (!isAdmin) return;
-                    const modal = document.getElementById('editModal');
-                    const content = document.getElementById('editModalContent');
-                    content.innerHTML = `
-                        <h3>Добавить работу</h3>
-                        <input id="modalTitle" placeholder="Название работы" value="Без названия">
-                        <input id="modalDesc" placeholder="Описание (необязательно)">
-                        <input id="modalImage" placeholder="Ссылка на фото (ImgPeek)" required>
-                        <div class="modal-buttons">
-                            <button id="saveItemBtn">Добавить</button>
-                            <button class="cancel" id="cancelModal">Отмена</button>
-                        </div>
-                    `;
-                    modal.classList.add('active');
-                    document.getElementById('saveItemBtn').onclick = () => {
-                        const title = document.getElementById('modalTitle').value || 'Без названия';
-                        const desc = document.getElementById('modalDesc').value || '';
-                        const img = document.getElementById('modalImage').value;
-                        if (!img) {
-                            alert('Пожалуйста, введите ссылку на изображение');
-                            return;
-                        }
-                        artworks.exhibition.push({
-                            id: Date.now() + Math.random(),
-                            title: title,
-                            description: desc,
-                            image_url: img
-                        });
-                        saveData();
-                        renderAll();
-                        modal.classList.remove('active');
-                    };
-                    document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
-                });
-
-                // ========== ДОБАВЛЕНИЕ ТОВАРА ==========
-                document.getElementById('addShopBtn')?.addEventListener('click', () => {
-                    if (!isAdmin) return;
-                    const modal = document.getElementById('editModal');
-                    const content = document.getElementById('editModalContent');
-                    content.innerHTML = `
-                        <h3>Добавить товар</h3>
-                        <input id="modalTitle" placeholder="Название товара" value="Без названия">
-                        <input id="modalDesc" placeholder="Описание (необязательно)">
-                        <input id="modalPrice" placeholder="Цена" value="цена по запросу">
-                        <input id="modalImage" placeholder="Ссылка на фото (ImgPeek)" required>
-                        <div class="modal-buttons">
-                            <button id="saveItemBtn">Добавить</button>
-                            <button class="cancel" id="cancelModal">Отмена</button>
-                        </div>
-                    `;
-                    modal.classList.add('active');
-                    document.getElementById('saveItemBtn').onclick = () => {
-                        const title = document.getElementById('modalTitle').value || 'Без названия';
-                        const desc = document.getElementById('modalDesc').value || '';
-                        const price = document.getElementById('modalPrice').value || 'цена по запросу';
-                        const img = document.getElementById('modalImage').value;
-                        if (!img) {
-                            alert('Пожалуйста, введите ссылку на изображение');
-                            return;
-                        }
-                        artworks.shop.push({
-                            id: Date.now() + Math.random(),
-                            title: title,
-                            description: desc,
-                            price: price,
-                            image_url: img
-                        });
-                        saveData();
-                        renderAll();
-                        modal.classList.remove('active');
-                    };
-                    document.getElementById('cancelModal').onclick = () => modal.classList.remove('active');
-                });
-
-                // ========== АВТОРИЗАЦИЯ ==========
-                document.getElementById('cancelLogin')?.addEventListener('click', () => {
+            // ========== АДМИНКА ==========
+            document.getElementById('submitPassword')?.addEventListener('click', () => {
+                const pwd = document.getElementById('passwordInput').value;
+                if (pwd === ADMIN_PASSWORD) {
+                    isAdmin = true;
+                    document.body.classList.add('admin-mode');
+                    sessionStorage.setItem('bibl_admin', 'true');
                     document.getElementById('loginModal').classList.remove('active');
+                    renderAll();
+                    const url = new URL(window.location);
+                    url.searchParams.delete('bibl_edit');
+                    window.history.replaceState({}, '', url);
+                } else alert('Неверный пароль');
+            });
+            document.getElementById('cancelLogin')?.addEventListener('click', () => document.getElementById('loginModal').classList.remove('active'));
+            document.getElementById('addExhibitionBtn')?.addEventListener('click', () => openAddModal('exhibition'));
+            document.getElementById('addShopBtn')?.addEventListener('click', () => openAddModal('shop'));
+            
+            // Навигация
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                    document.getElementById(this.dataset.page + 'Page').classList.add('active');
                 });
+            });
+            
+            // Закрытие модалок по клику на фон
+            window.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal')) e.target.classList.remove('active');
+            });
+            
+            // ========== ИДЕАЛЬНЫЙ ТЕТРИС ==========
+            const canvas = document.getElementById('tetrisCanvas');
+            const ctx = canvas?.getContext('2d');
+            const scoreSpan = document.getElementById('gameScore');
+            if (canvas && ctx) {
+                const COLS = 10, ROWS = 20;
+                const SIZE = canvas.width / COLS;
+                let grid = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+                let score = 0;
+                let active = false, paused = false;
+                let interval = null;
+                let piece = null, pieceX = 0, pieceY = 0;
                 
-                document.getElementById('submitPassword')?.addEventListener('click', () => {
-                    const password = document.getElementById('passwordInput').value;
-                    if (password === ADMIN_PASSWORD) {
-                        isAdmin = true;
-                        document.body.classList.add('admin-mode');
-                        sessionStorage.setItem('bibl_admin', 'true');
-                        document.getElementById('loginModal').classList.remove('active');
-                        renderAll();
-                        const url = new URL(window.location);
-                        url.searchParams.delete('bibl_edit');
-                        window.history.replaceState({}, '', url);
-                    } else {
-                        alert('Неверный пароль');
-                    }
-                });
-
-                // ========== НАВИГАЦИЯ ==========
-                document.querySelectorAll('.nav-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                        this.classList.add('active');
-                        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                        document.getElementById(this.dataset.page + 'Page').classList.add('active');
-                    });
-                });
-
-                // ========== ЗАКРЫТИЕ МОДАЛОК ==========
-                window.addEventListener('click', (e) => {
-                    const loginModal = document.getElementById('loginModal');
-                    const editModal = document.getElementById('editModal');
-                    const zoomModal = document.getElementById('zoomModal');
-                    if (loginModal && e.target === loginModal) loginModal.classList.remove('active');
-                    if (editModal && e.target === editModal) editModal.classList.remove('active');
-                    if (zoomModal && e.target === zoomModal) zoomModal.classList.remove('active');
-                });
-
-                // ========== ТЕТРИС ==========
-                const canvas = document.getElementById('tetrisCanvas');
-                const ctx = canvas?.getContext('2d');
-                const scoreElement = document.getElementById('gameScore');
+                const SHAPES = [
+                    { shape: [[1,1,1,1]], color: '#faf9f7' },
+                    { shape: [[1,1],[1,1]], color: '#faf9f7' },
+                    { shape: [[0,1,0],[1,1,1]], color: '#faf9f7' },
+                    { shape: [[0,1,1],[1,1,0]], color: '#faf9f7' },
+                    { shape: [[1,1,0],[0,1,1]], color: '#faf9f7' },
+                    { shape: [[1,0,0],[1,1,1]], color: '#faf9f7' },
+                    { shape: [[0,0,1],[1,1,1]], color: '#faf9f7' }
+                ];
                 
-                if (canvas && ctx && scoreElement) {
-                    const COLS = 10;
-                    const ROWS = 20;
-                    const BLOCK_SIZE = canvas.width / COLS;
-
-                    let grid = [];
-                    let score = 0;
-                    let gameActive = false;
-                    let gamePaused = false;
-                    let gameInterval;
-                    
-                    const pieces = [
-                        { shape: [[1,1,1,1]], color: '#faf9f7' },
-                        { shape: [[1,1],[1,1]], color: '#faf9f7' },
-                        { shape: [[0,1,0],[1,1,1]], color: '#faf9f7' },
-                        { shape: [[0,1,1],[1,1,0]], color: '#faf9f7' },
-                        { shape: [[1,1,0],[0,1,1]], color: '#faf9f7' },
-                        { shape: [[1,0,0],[1,1,1]], color: '#faf9f7' },
-                        { shape: [[0,0,1],[1,1,1]], color: '#faf9f7' }
-                    ];
-
-                    let currentPiece = null;
-                    let currentX = 0, currentY = 0;
-
-                    function initGrid() {
-                        grid = Array(ROWS).fill().map(() => Array(COLS).fill(0));
-                    }
-
-                    function spawnPiece() {
-                        const piece = pieces[Math.floor(Math.random() * pieces.length)];
-                        currentPiece = {
-                            shape: piece.shape.map(row => [...row]),
-                            color: piece.color
-                        };
-                        currentX = Math.floor((COLS - piece.shape[0].length) / 2);
-                        currentY = 0;
-                        
-                        if (collision()) {
-                            gameOver();
-                        }
-                    }
-
-                    function collision() {
-                        if (!currentPiece) return true;
-                        for (let y = 0; y < currentPiece.shape.length; y++) {
-                            for (let x = 0; x < currentPiece.shape[0].length; x++) {
-                                if (currentPiece.shape[y][x]) {
-                                    const boardX = currentX + x;
-                                    const boardY = currentY + y;
-                                    if (boardX < 0 || boardX >= COLS || boardY >= ROWS || (boardY >= 0 && grid[boardY] && grid[boardY][boardX])) {
-                                        return true;
-                                    }
-                                }
+                function randomPiece() {
+                    const p = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+                    return { shape: p.shape.map(r => [...r]), color: p.color };
+                }
+                
+                function spawn() {
+                    piece = randomPiece();
+                    pieceX = Math.floor((COLS - piece.shape[0].length) / 2);
+                    pieceY = 0;
+                    if (collision()) { gameOver(); }
+                }
+                
+                function collision() {
+                    for (let y = 0; y < piece.shape.length; y++) {
+                        for (let x = 0; x < piece.shape[0].length; x++) {
+                            if (piece.shape[y][x]) {
+                                const nx = pieceX + x, ny = pieceY + y;
+                                if (nx < 0 || nx >= COLS || ny >= ROWS || (ny >= 0 && grid[ny]?.[nx])) return true;
                             }
                         }
+                    }
+                    return false;
+                }
+                
+                function merge() {
+                    for (let y = 0; y < piece.shape.length; y++) {
+                        for (let x = 0; x < piece.shape[0].length; x++) {
+                            if (piece.shape[y][x]) {
+                                const ny = pieceY + y, nx = pieceX + x;
+                                if (ny >= 0 && ny < ROWS) grid[ny][nx] = 1;
+                            }
+                        }
+                    }
+                    clearLines();
+                    spawn();
+                }
+                
+                function clearLines() {
+                    let cleared = 0;
+                    for (let y = ROWS-1; y >= 0; y--) {
+                        if (grid[y].every(c => c === 1)) {
+                            grid.splice(y, 1);
+                            grid.unshift(Array(COLS).fill(0));
+                            y++;
+                            cleared++;
+                        }
+                    }
+                    if (cleared) { score += cleared * 100; scoreSpan.textContent = score; }
+                }
+                
+                function move(dx, dy) {
+                    if (!active || paused) return false;
+                    pieceX += dx; pieceY += dy;
+                    if (collision()) {
+                        pieceX -= dx; pieceY -= dy;
+                        if (dy === 1) { merge(); }
                         return false;
                     }
-
-                    function mergePiece() {
-                        if (!currentPiece) return;
-                        for (let y = 0; y < currentPiece.shape.length; y++) {
-                            for (let x = 0; x < currentPiece.shape[0].length; x++) {
-                                if (currentPiece.shape[y][x]) {
-                                    const boardY = currentY + y;
-                                    const boardX = currentX + x;
-                                    if (boardY >= 0 && grid[boardY]) {
-                                        grid[boardY][boardX] = 1;
-                                    }
-                                }
-                            }
-                        }
-                        checkLines();
-                        spawnPiece();
-                    }
-
-                    function checkLines() {
-                        let linesCleared = 0;
-                        for (let y = ROWS - 1; y >= 0; y--) {
-                            if (grid[y] && grid[y].every(cell => cell === 1)) {
-                                grid.splice(y, 1);
-                                grid.unshift(Array(COLS).fill(0));
-                                y++;
-                                linesCleared++;
-                            }
-                        }
-                        if (linesCleared > 0) {
-                            score += linesCleared * 100;
-                            scoreElement.textContent = score;
-                        }
-                    }
-
-                    function movePiece(dx, dy) {
-                        if (!gameActive || gamePaused || !currentPiece) return false;
-                        currentX += dx;
-                        currentY += dy;
-                        if (collision()) {
-                            currentX -= dx;
-                            currentY -= dy;
-                            if (dy === 1) {
-                                mergePiece();
-                            }
-                            return false;
-                        }
-                        return true;
-                    }
-
-                    function rotatePiece() {
-                        if (!gameActive || gamePaused || !currentPiece) return;
-                        const rotated = currentPiece.shape[0].map((_, i) => 
-                            currentPiece.shape.map(row => row[i]).reverse()
-                        );
-                        const originalShape = currentPiece.shape.map(row => [...row]);
-                        currentPiece.shape = rotated;
-                        if (collision()) {
-                            currentPiece.shape = originalShape;
-                        }
-                    }
-
-                    function gameOver() {
-                        gameActive = false;
-                        if (gameInterval) {
-                            clearInterval(gameInterval);
-                            gameInterval = null;
-                        }
-                    }
-
-                    function draw() {
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        ctx.strokeStyle = '#faf9f7';
-                        ctx.lineWidth = 1;
-                        
-                        for (let y = 0; y < ROWS; y++) {
-                            for (let x = 0; x < COLS; x++) {
-                                if (grid[y] && grid[y][x]) {
-                                    ctx.fillStyle = '#faf9f7';
-                                    ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
-                                } else {
-                                    ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1);
-                                }
-                            }
-                        }
-                        
-                        if (currentPiece && gameActive) {
-                            ctx.fillStyle = '#faf9f7';
-                            for (let y = 0; y < currentPiece.shape.length; y++) {
-                                for (let x = 0; x < currentPiece.shape[0].length; x++) {
-                                    if (currentPiece.shape[y][x]) {
-                                        ctx.fillRect(
-                                            (currentX + x) * BLOCK_SIZE,
-                                            (currentY + y) * BLOCK_SIZE,
-                                            BLOCK_SIZE-1,
-                                            BLOCK_SIZE-1
-                                        );
-                                    }
-                                }
-                            }
-                        }
-                        
-                        if (gamePaused && gameActive) {
-                            ctx.fillStyle = 'rgba(0,0,0,0.5)';
-                            ctx.fillRect(0, 0, canvas.width, canvas.height);
-                            ctx.fillStyle = '#faf9f7';
-                            ctx.font = '20px Georgia';
-                            ctx.textAlign = 'center';
-                            ctx.fillText('ПАУЗА', canvas.width/2, canvas.height/2);
-                        }
-                        
-                        if (!gameActive) {
-                            ctx.fillStyle = 'rgba(0,0,0,0.7)';
-                            ctx.fillRect(0, 0, canvas.width, canvas.height);
-                            ctx.fillStyle = '#faf9f7';
-                            ctx.font = '20px Georgia';
-                            ctx.textAlign = 'center';
-                            ctx.fillText('ИГРА ОКОНЧЕНА', canvas.width/2, canvas.height/2);
-                        }
-                    }
-
-                    function gameLoop() {
-                        if (gameActive && !gamePaused) {
-                            movePiece(0, 1);
-                        }
-                        draw();
-                    }
-
-                    function startNewGame() {
-                        if (gameInterval) {
-                            clearInterval(gameInterval);
-                        }
-                        initGrid();
-                        score = 0;
-                        scoreElement.textContent = '0';
-                        gameActive = true;
-                        gamePaused = false;
-                        spawnPiece();
-                        gameInterval = setInterval(gameLoop, 300);
-                    }
-
-                    document.addEventListener('keydown', (e) => {
-                        const activePage = document.querySelector('.page.active')?.id;
-                        if (activePage !== 'gamePage' || !gameActive) return;
-                        
-                        switch(e.key) {
-                            case 'ArrowLeft':
-                                e.preventDefault();
-                                movePiece(-1, 0);
-                                draw();
-                                break;
-                            case 'ArrowRight':
-                                e.preventDefault();
-                                movePiece(1, 0);
-                                draw();
-                                break;
-                            case 'ArrowDown':
-                                e.preventDefault();
-                                movePiece(0, 1);
-                                draw();
-                                break;
-                            case 'ArrowUp':
-                                e.preventDefault();
-                                rotatePiece();
-                                draw();
-                                break;
-                        }
-                    });
-
-                    document.getElementById('moveLeftBtn')?.addEventListener('click', () => {
-                        if (document.querySelector('.page.active')?.id === 'gamePage' && gameActive && !gamePaused) {
-                            movePiece(-1, 0);
-                            draw();
-                        }
-                    });
-                    
-                    document.getElementById('moveRightBtn')?.addEventListener('click', () => {
-                        if (document.querySelector('.page.active')?.id === 'gamePage' && gameActive && !gamePaused) {
-                            movePiece(1, 0);
-                            draw();
-                        }
-                    });
-                    
-                    document.getElementById('moveDownBtn')?.addEventListener('click', () => {
-                        if (document.querySelector('.page.active')?.id === 'gamePage' && gameActive && !gamePaused) {
-                            movePiece(0, 1);
-                            draw();
-                        }
-                    });
-                    
-                    document.getElementById('rotateBtn')?.addEventListener('click', () => {
-                        if (document.querySelector('.page.active')?.id === 'gamePage' && gameActive && !gamePaused) {
-                            rotatePiece();
-                            draw();
-                        }
-                    });
-
-                    document.getElementById('newGameBtn')?.addEventListener('click', startNewGame);
-                    
-                    document.getElementById('pauseGameBtn')?.addEventListener('click', () => {
-                        if (!gameActive) return;
-                        gamePaused = !gamePaused;
-                        draw();
-                    });
+                    return true;
                 }
-
-                // ========== ЗАПУСК ==========
-                loadData();
-            });
+                
+                function rotate() {
+                    if (!active || paused) return;
+                    const rotated = piece.shape[0].map((_, i) => piece.shape.map(row => row[i]).reverse());
+                    const old = piece.shape.map(r => [...r]);
+                    piece.shape = rotated;
+                    if (collision()) piece.shape = old;
+                }
+                
+                function gameOver() {
+                    active = false;
+                    if (interval) clearInterval(interval);
+                    interval = null;
+                }
+                
+                function draw() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.strokeStyle = '#faf9f7';
+                    for (let y = 0; y < ROWS; y++) {
+                        for (let x = 0; x < COLS; x++) {
+                            if (grid[y][x]) { ctx.fillStyle = '#faf9f7'; ctx.fillRect(x*SIZE, y*SIZE, SIZE-1, SIZE-1); }
+                            else ctx.strokeRect(x*SIZE, y*SIZE, SIZE-1, SIZE-1);
+                        }
+                    }
+                    if (piece && active) {
+                        ctx.fillStyle = '#faf9f7';
+                        for (let y = 0; y < piece.shape.length; y++)
+                            for (let x = 0; x < piece.shape[0].length; x++)
+                                if (piece.shape[y][x]) ctx.fillRect((pieceX+x)*SIZE, (pieceY+y)*SIZE, SIZE-1, SIZE-1);
+                    }
+                    if (paused && active) {
+                        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.fillStyle = '#faf9f7';
+                        ctx.font = '20px Georgia';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('ПАУЗА', canvas.width/2, canvas.height/2);
+                    }
+                    if (!active) {
+                        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.fillStyle = '#faf9f7';
+                        ctx.font = '20px Georgia';
+                        ctx.fillText('ИГРА ОКОНЧЕНА', canvas.width/2, canvas.height/2);
+                    }
+                }
+                
+                function loop() { if (active && !paused) { move(0, 1); draw(); } else draw(); }
+                
+                function startNew() {
+                    if (interval) clearInterval(interval);
+                    grid = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+                    score = 0;
+                    scoreSpan.textContent = '0';
+                    active = true;
+                    paused = false;
+                    spawn();
+                    interval = setInterval(loop, 280);
+                    draw();
+                }
+                
+                document.addEventListener('keydown', (e) => {
+                    if (!document.getElementById('gamePage').classList.contains('active')) return;
+                    if (!active) return;
+                    if (e.key === 'ArrowLeft') { e.preventDefault(); move(-1, 0); draw(); }
+                    if (e.key === 'ArrowRight') { e.preventDefault(); move(1, 0); draw(); }
+                    if (e.key === 'ArrowDown') { e.preventDefault(); move(0, 1); draw(); }
+                    if (e.key === 'ArrowUp') { e.preventDefault(); rotate(); draw(); }
+                });
+                
+                document.getElementById('moveLeftBtn')?.addEventListener('click', () => { if(active && !paused) { move(-1,0); draw(); } });
+                document.getElementById('moveRightBtn')?.addEventListener('click', () => { if(active && !paused) { move(1,0); draw(); } });
+                document.getElementById('moveDownBtn')?.addEventListener('click', () => { if(active && !paused) { move(0,1); draw(); } });
+                document.getElementById('rotateBtn')?.addEventListener('click', () => { if(active && !paused) { rotate(); draw(); } });
+                document.getElementById('newGameBtn')?.addEventListener('click', startNew);
+                document.getElementById('pauseGameBtn')?.addEventListener('click', () => { if(active) { paused = !paused; draw(); } });
+                startNew();
+            }
+            
+            loadData();
         })();
     </script>
 </body>
-</html><!-- ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ -->
-<script>
-    localStorage.clear();
-    sessionStorage.clear();
-    console.log('КЭШ ОЧИЩЕН');
-</script>
+</html>

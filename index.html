@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>библ — работы</title>
+<meta name="description" content="Живопись маслом, акрилом и текстилем. Работы и цены.">
+<meta name="theme-color" content="#0c0f14">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/golos-regular.woff" as="font" type="font/woff" crossorigin>
+<link rel="preload" href="fonts/playfair.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="head" id="head">
+  <div class="head__in">
+    <a class="brand" href="#works">библ</a>
+    <button class="burger" id="burger" aria-label="Меню" aria-expanded="false" aria-controls="nav">
+      <span></span><span></span>
+    </button>
+    <nav class="nav" id="nav" aria-label="Разделы">
+      <a href="#works"    data-nav="works">Работы</a>
+      <a href="#sold"     data-nav="sold">Проданные</a>
+      <a href="#contacts" data-nav="contacts">Контакты</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- РАБОТЫ -->
+  <section class="view" id="view-works" data-view="works">
+    <div class="lede">
+      <p class="lede__kicker">Художница</p>
+      <h1 class="lede__title" id="bio-title">библ</h1>
+      <div class="lede__row">
+        <p class="lede__text" id="bio-lede"></p>
+        <p class="lede__meta" id="lede-meta"></p>
+      </div>
+    </div>
+    <div class="hero-rule"></div>
+    <div class="grid" id="grid-works" aria-live="polite"></div>
+    <p class="void" id="void-works" hidden>Работы скоро появятся</p>
+  </section>
+
+  <!-- ПРОДАННЫЕ -->
+  <section class="view" id="view-sold" data-view="sold" hidden>
+    <div class="lede lede--small">
+      <p class="lede__kicker">Архив</p>
+      <h2 class="lede__title">Проданные работы</h2>
+      <div class="lede__row">
+        <p class="lede__text">О том, как я работаю и что уже нашло свой дом.</p>
+      </div>
+    </div>
+    <div class="hero-rule"></div>
+    <div class="grid" id="grid-sold" aria-live="polite"></div>
+    <p class="void" id="void-sold" hidden>Здесь пока пусто</p>
+  </section>
+
+  <!-- КОНТАКТЫ -->
+  <section class="view" id="view-contacts" data-view="contacts" hidden>
+    <div class="about">
+      <div class="about__photo" id="about-photo"></div>
+      <div class="about__body">
+        <p class="lede__kicker">Обо мне</p>
+        <h2 class="lede__title" id="about-name">библ</h2>
+        <p class="about__text" id="about-text"></p>
+        <dl class="facts" id="about-facts"></dl>
+        <div class="contacts" id="contact-links"></div>
+        <p class="about__note">Заказ и покупка — в переписке. Отвечаю в течение суток.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="foot__in">
+    <span id="legal-line"></span>
+    <span class="foot__copy">© <span id="year"></span> библ</span>
+  </div>
+</footer>
+
+<!-- ПРОСМОТР НА ВЕСЬ ЭКРАН -->
+<div class="lb" id="lb" hidden>
+  <button class="lb__close" id="lb-close" aria-label="Закрыть">×</button>
+  <button class="lb__arrow lb__arrow--prev" id="lb-prev" aria-label="Предыдущая">‹</button>
+  <button class="lb__arrow lb__arrow--next" id="lb-next" aria-label="Следующая">›</button>
+  <figure class="lb__figure">
+    <img class="lb__img" id="lb-img" alt="">
+    <figcaption class="lb__cap">
+      <div class="lb__title" id="lb-title"></div>
+      <div class="lb__meta" id="lb-meta"></div>
+      <div class="lb__price" id="lb-price"></div>
+      <p class="lb__desc" id="lb-desc"></p>
+    </figcaption>
+  </figure>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

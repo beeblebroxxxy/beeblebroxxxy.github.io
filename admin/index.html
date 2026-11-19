@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>библ — управление</title>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="adm">
+
+<header class="head">
+  <div class="head__in">
+    <span class="brand">библ</span>
+    <nav class="nav">
+      <a href="#" data-tab="works" class="is-active">Работы</a>
+      <a href="#" data-tab="profile">Профиль</a>
+      <a href="#" data-tab="token">Доступ</a>
+      <a href="../" target="_blank" rel="noopener">Сайт ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main class="adm__main">
+
+  <!-- ДОСТУП -->
+  <section class="panel" id="panel-token" hidden>
+    <h1 class="adm__h1">Доступ</h1>
+    <p class="adm__lead">Управление работает напрямую с GitHub: ни сервера, ни пароля на сайте нет.
+      Нужен один токен — он хранится только в этом браузере.</p>
+
+    <div class="steps">
+      <p><strong>1.</strong> Откройте <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">создание токена</a>.</p>
+      <p><strong>2.</strong> Token name — <code>beeble-art</code>. Expiration — на ваш выбор, лучше 1 год.</p>
+      <p><strong>3.</strong> Repository access → <em>Only select repositories</em> → <code>beeblebroxxxy.github.io</code>.</p>
+      <p><strong>4.</strong> Permissions → Repository permissions → <strong>Contents: Read and write</strong>. Больше ничего не нужно.</p>
+      <p><strong>5.</strong> Generate token, скопируйте его и вставьте ниже.</p>
+    </div>
+
+    <label class="fld">
+      <span class="fld__k">Токен</span>
+      <input class="fld__i" id="token-input" type="password" autocomplete="off" placeholder="github_pat_…">
+    </label>
+
+    <div class="row">
+      <button class="btn btn--primary" id="token-save">Сохранить</button>
+      <button class="btn" id="token-clear" hidden>Забыть токен</button>
+    </div>
+    <p class="msg" id="token-msg"></p>
+  </section>
+
+  <!-- РАБОТЫ -->
+  <section class="panel" id="panel-works" hidden>
+    <div class="adm__head">
+      <h1 class="adm__h1">Работы</h1>
+      <button class="btn btn--primary" id="new-work">+ Новая работа</button>
+    </div>
+    <p class="msg" id="works-msg"></p>
+    <div class="list" id="works-list"></div>
+  </section>
+
+  <!-- ФОРМА РАБОТЫ -->
+  <section class="panel" id="panel-form" hidden>
+    <h1 class="adm__h1" id="form-title">Новая работа</h1>
+
+    <div class="form">
+      <div class="form__media">
+        <div class="drop" id="drop">
+          <img id="preview" alt="" hidden>
+          <span class="drop__hint" id="drop-hint">Перетащите фото<br>или нажмите</span>
+          <input type="file" id="photo" accept="image/*" hidden>
+        </div>
+        <p class="form__note">JPG, PNG или HEIC. Сжимается автоматически.</p>
+      </div>
+
+      <div class="form__fields">
+        <label class="fld"><span class="fld__k">Название *</span>
+          <input class="fld__i" id="f-title" type="text" autocomplete="off"></label>
+
+        <div class="form__two">
+          <label class="fld"><span class="fld__k">Год</span>
+            <input class="fld__i" id="f-year" type="text" inputmode="numeric" autocomplete="off" placeholder="2026"></label>
+          <label class="fld"><span class="fld__k">Цена, ₽ *</span>
+            <input class="fld__i" id="f-price" type="text" inputmode="numeric" autocomplete="off" placeholder="45000"></label>
+        </div>
+
+        <div class="form__two">
+          <label class="fld"><span class="fld__k">Техника</span>
+            <input class="fld__i" id="f-tech" type="text" autocomplete="off" placeholder="холст, масло"></label>
+          <label class="fld"><span class="fld__k">Размер</span>
+            <input class="fld__i" id="f-size" type="text" autocomplete="off" placeholder="60 × 80 см"></label>
+        </div>
+
+        <label class="fld"><span class="fld__k">Описание</span>
+          <textarea class="fld__i" id="f-desc" rows="4"></textarea></label>
+
+        <label class="chk"><input type="checkbox" id="f-sold"> <span>Продана — в раздел «Проданные»</span></label>
+
+        <p class="msg" id="form-msg"></p>
+
+        <div class="row">
+          <button class="btn btn--primary" id="form-save">Сохранить</button>
+          <button class="btn" id="form-cancel">Отмена</button>
+          <button class="btn btn--danger" id="form-delete" hidden>Удалить</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ПРОФИЛЬ -->
+  <section class="panel" id="panel-profile" hidden>
+    <h1 class="adm__h1">Профиль</h1>
+    <div class="form">
+      <div class="form__media">
+        <div class="drop drop--portrait" id="drop-bio">
+          <img id="preview-bio" alt="" hidden>
+          <span class="drop__hint" id="drop-bio-hint">Фото<br>нажмите</span>
+          <input type="file" id="photo-bio" accept="image/*" hidden>
+        </div>
+      </div>
+      <div class="form__fields">
+        <label class="fld"><span class="fld__k">Имя на сайте</span>
+          <input class="fld__i" id="b-name" type="text" autocomplete="off"></label>
+        <label class="fld"><span class="fld__k">Строка под заголовком</span>
+          <input class="fld__i" id="b-lede" type="text" autocomplete="off"></label>
+        <label class="fld"><span class="fld__k">О себе</span>
+          <textarea class="fld__i" id="b-text" rows="6"></textarea></label>
+
+        <div class="fld">
+          <span class="fld__k">Факты (возраст, образование, опыт, техники)</span>
+          <div id="facts-list" class="facts-edit"></div>
+          <button class="btn btn--ghost" id="fact-add" type="button">+ добавить строку</button>
+        </div>
+
+        <div class="form__two">
+          <label class="fld"><span class="fld__k">Telegram (без @)</span>
+            <input class="fld__i" id="c-tg" type="text" autocomplete="off"></label>
+          <label class="fld"><span class="fld__k">Канал (без @)</span>
+            <input class="fld__i" id="c-channel" type="text" autocomplete="off"></label>
+        </div>
+
+        <div class="form__two">
+          <label class="fld"><span class="fld__k">Имя для подвала</span>
+            <input class="fld__i" id="l-name" type="text" autocomplete="off" placeholder="Иванова И. И."></label>
+          <label class="fld"><span class="fld__k">ИНН</span>
+            <input class="fld__i" id="l-inn" type="text" inputmode="numeric" autocomplete="off"></label>
+        </div>
+        <label class="fld"><span class="fld__k">Статус</span>
+          <input class="fld__i" id="l-status" type="text" autocomplete="off" placeholder="самозанятая"></label>
+
+        <p class="msg" id="profile-msg"></p>
+        <div class="row"><button class="btn btn--primary" id="profile-save">Сохранить</button></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="admin.js"></script>
+</body>
+</html>

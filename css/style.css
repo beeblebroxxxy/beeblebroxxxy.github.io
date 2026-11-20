@@ -131,7 +131,7 @@ button{font:inherit;color:inherit}
   max-width:1080px;margin:0 auto clamp(52px,6.4vw,104px);
 }
 .intro__photo{margin:0;box-shadow:0 0 0 1px var(--line),0 44px 80px -50px #000}
-.intro__photo img{width:100%;height:auto;display:block;filter:grayscale(.3) contrast(1.03)}
+.intro__photo img{width:100%;height:auto;display:block;filter:grayscale(.55) contrast(1.06) brightness(.94) saturate(.8)}
 .intro__kicker{margin:0 0 20px;font-size:10.5px;letter-spacing:.44em;text-transform:uppercase;color:var(--accent)}
 .intro__text{
   margin:0 0 32px;font:italic 400 clamp(17px,1.6vw,21px)/1.6 'Cormorant',Georgia,serif;

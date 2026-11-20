@@ -221,7 +221,7 @@ button{font:inherit;color:inherit}
 /* ---------- обо мне ---------- */
 .about{display:grid;grid-template-columns:minmax(240px,420px) minmax(0,1fr);gap:clamp(28px,4.6vw,76px);align-items:start}
 .about__photo{background:var(--panel);box-shadow:0 0 0 1px var(--line-soft),0 30px 60px -34px rgba(0,0,0,.9)}
-.about__photo img{width:100%;height:auto;display:block}
+.about__photo img{width:100%;height:auto;display:block;filter:grayscale(.55) contrast(1.06) brightness(.94) saturate(.8)}
 .about__body{padding-top:4px}
 .about__body .lede__title{font-size:clamp(40px,4.8vw,62px);letter-spacing:.05em;margin-bottom:0}
 .about--nophoto{grid-template-columns:minmax(0,1fr)}

@@ -124,6 +124,52 @@ button{font:inherit;color:inherit}
 }
 .hero-rule{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin-bottom:clamp(36px,4.4vw,64px)}
 
+/* ---------- о художнице ---------- */
+.intro{
+  display:grid;grid-template-columns:minmax(200px,290px) minmax(0,1fr);
+  gap:clamp(26px,4.6vw,68px);align-items:start;
+  max-width:1080px;margin:0 auto clamp(52px,6.4vw,104px);
+}
+.intro__photo{margin:0;box-shadow:0 0 0 1px var(--line),0 44px 80px -50px #000}
+.intro__photo img{width:100%;height:auto;display:block;filter:grayscale(.3) contrast(1.03)}
+.intro__kicker{margin:0 0 20px;font-size:10.5px;letter-spacing:.44em;text-transform:uppercase;color:var(--accent)}
+.intro__text{
+  margin:0 0 32px;font:italic 400 clamp(17px,1.6vw,21px)/1.6 'Cormorant',Georgia,serif;
+  color:var(--ink-dim);white-space:pre-line;max-width:62ch;
+}
+.intro__facts{margin:0 0 30px;border-top:1px solid var(--line-soft)}
+.intro__facts div{display:grid;grid-template-columns:minmax(110px,.42fr) 1fr;gap:18px;padding:13px 0;border-bottom:1px solid var(--line-soft)}
+.intro__facts dt{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-faint);padding-top:5px}
+.intro__facts dd{margin:0;font:400 18px/1.4 'Cormorant',Georgia,serif;color:var(--ink)}
+.intro__more{
+  display:inline-block;font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--accent);border-bottom:1px solid rgba(169,191,222,.45);padding-bottom:5px;
+  transition:border-color .3s,color .3s;
+}
+.intro__more:hover{color:#c3d3ea;border-bottom-color:#c3d3ea}
+
+/* ---------- главная работа ---------- */
+.featured-wrap{margin:0 0 clamp(46px,5.6vw,92px);text-align:center}
+.featured{
+  display:block;width:100%;border:0;background:none;padding:0;cursor:pointer;
+  animation:rise .9s cubic-bezier(.2,.7,.3,1) both;
+}
+.featured img{
+  display:block;margin:0 auto;max-width:100%;max-height:min(70vh,680px);width:auto;height:auto;
+  box-shadow:0 0 0 1px var(--line-soft),0 60px 120px -60px #000;
+  transition:filter .5s;
+}
+.featured:hover img{filter:brightness(1.04)}
+.featured__cap{display:block;margin-top:26px}
+.featured__title{
+  display:block;font:400 clamp(24px,2.4vw,34px)/1.25 'Cormorant',Georgia,serif;
+  color:var(--ink);letter-spacing:.01em;transition:color .3s;
+}
+.featured:hover .featured__title{color:var(--accent)}
+.featured__price{
+  display:block;margin:14px auto 0;font-size:15px;letter-spacing:.1em;color:var(--ink-dim);
+}
+
 /* ---------- развеска ---------- */
 .grid{columns:3;column-gap:var(--gap)}
 .card{
@@ -146,6 +192,10 @@ button{font:inherit;color:inherit}
   font:italic 400 12px/1 'Cormorant',Georgia,serif;letter-spacing:.18em;color:var(--ink-dim);
 }
 .card__cap{display:block;padding-top:20px}
+.card__num{
+  display:block;margin-bottom:10px;font-size:9.5px;letter-spacing:.34em;
+  text-transform:uppercase;color:var(--accent);opacity:.85;
+}
 .card__title{
   display:block;font:400 clamp(20px,1.7vw,26px)/1.25 'Cormorant',Georgia,serif;
   letter-spacing:.01em;color:var(--ink);transition:color .3s;
@@ -199,6 +249,9 @@ button{font:inherit;color:inherit}
 
 /* ---------- подвал ---------- */
 .foot{border-top:1px solid var(--line-soft);margin-top:20px}
+.foot__links{display:flex;gap:26px}
+.foot__links a{border-bottom:1px solid transparent;transition:color .25s,border-color .25s}
+.foot__links a:hover{color:var(--accent);border-bottom-color:var(--accent)}
 .foot__in{
   max-width:var(--max);margin:0 auto;padding:30px var(--pad) 38px;
   display:flex;flex-wrap:wrap;gap:10px 28px;justify-content:space-between;
@@ -239,6 +292,8 @@ button{font:inherit;color:inherit}
   .nav{gap:20px}
   .nav a{font-size:10px;letter-spacing:.12em}
   .about{grid-template-columns:1fr}
+  .intro{grid-template-columns:1fr}
+  .intro__photo{max-width:320px}
   .about__photo{max-width:360px}
   .facts__row{grid-template-columns:1fr;gap:4px;padding:16px 0}
   .lb__arrow{font-size:36px}

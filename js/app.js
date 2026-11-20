@@ -22,6 +22,13 @@
     return String(v);
   }
 
+  function roman(n) {
+    var map = [[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+    var out = '';
+    map.forEach(function (p) { while (n >= p[0]) { out += p[1]; n -= p[0]; } });
+    return out;
+  }
+
   function meta(w) {
     return [w.year, w.technique, w.size].filter(Boolean).join(' · ');
   }
@@ -54,6 +61,7 @@
           '<img class="card__img" src="' + esc(w.img) + '" alt="' + esc(w.title) + '" loading="lazy" decoding="async">' +
         '</span>' +
         '<span class="card__cap">' +
+          '<span class="card__num">' + roman(i + 1) + '</span>' +
           '<span class="card__title">' + esc(w.title) + '</span>' +
           '<span class="card__meta">' + esc(meta(w)) + '</span>' +
           '<span class="card__price">' + esc(money(w.price)) + '</span>' +
@@ -61,8 +69,34 @@
       '</button>';
   }
 
-  function paint(grid, list, voidEl) {
-    grid.innerHTML = list.map(cardHTML).join('');
+  function paint(grid, list, voidEl, featuredEl) {
+    var offset = 0;
+
+    if (featuredEl) {
+      if (list.length > 1) {
+        var f = list[0];
+        featuredEl.innerHTML = '' +
+          '<button class="featured" data-i="0" aria-label="Открыть работу: ' + esc(f.title) + '">' +
+            '<img src="' + esc(f.img) + '" alt="' + esc(f.title) + '">' +
+            '<span class="featured__cap">' +
+              '<span class="card__num">' + roman(1) + '</span>' +
+              '<span class="featured__title">' + esc(f.title) + '</span>' +
+              '<span class="card__meta" style="display:block;margin-top:10px">' + esc(meta(f)) + '</span>' +
+              '<span class="featured__price">' + esc(money(f.price)) + '</span>' +
+            '</span>' +
+          '</button>';
+        featuredEl.hidden = false;
+        featuredEl.querySelector('.featured').addEventListener('click', function () {
+          openLightbox(list, 0);
+        });
+        offset = 1;
+      } else {
+        featuredEl.innerHTML = '';
+        featuredEl.hidden = true;
+      }
+    }
+
+    grid.innerHTML = list.slice(offset).map(function (w, k) { return cardHTML(w, offset + k); }).join('');
     if (voidEl) voidEl.hidden = list.length > 0;
     $$('.card', grid).forEach(function (btn) {
       btn.addEventListener('click', function () { openLightbox(list, Number(btn.dataset.i)); });
@@ -106,6 +140,31 @@
       return '<a class="contacts__link" href="' + esc(x.href) + '" target="_blank" rel="noopener">' +
              esc(x.label) + ' <span style="color:var(--ink-faint)">' + esc(x.sub) + '</span></a>';
     }).join('');
+
+    var introText = $('#intro-text'), introFact = $('#intro-facts'), introPhoto = $('#intro-photo');
+    if (introText) introText.textContent = b.text || b.lede || '';
+    if (introPhoto) {
+      introPhoto.innerHTML = b.photo
+        ? '<img src="' + esc(b.photo) + '" alt="' + esc(b.name || '') + '">'
+        : '';
+      introPhoto.hidden = !b.photo;
+    }
+    if (introFact) {
+      introFact.innerHTML = facts.map(function (f) {
+        return '<div><dt>' + esc(f.k) + '</dt><dd>' + esc(f.v) + '</dd></div>';
+      }).join('');
+      introFact.hidden = facts.length === 0;
+    }
+
+    var links = [];
+    if (c.telegram) links.push({ href: 'https://t.me/' + c.telegram, label: 'Telegram' });
+    if (c.channel) links.push({ href: 'https://t.me/' + c.channel, label: 'Канал' });
+    var footLinks = $('#foot-links');
+    if (footLinks) {
+      footLinks.innerHTML = links.map(function (x) {
+        return '<a href="' + esc(x.href) + '" target="_blank" rel="noopener">' + esc(x.label) + '</a>';
+      }).join('');
+    }
 
     var legal = [];
     if (l.name) legal.push(esc(l.name));
@@ -197,7 +256,7 @@
 
     renderProfile();
     renderMeta();
-    paint($('#grid-works'), state.works, $('#void-works'));
+    paint($('#grid-works'), state.works, $('#void-works'), $('#featured'));
     paint($('#grid-sold'), state.sold, $('#void-sold'));
     route();
   });
